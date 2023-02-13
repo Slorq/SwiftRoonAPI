@@ -45,7 +45,7 @@ class MooDecoder {
         let lines = string.components(separatedBy: "\n")
 
         // First line
-        let firstLineRegex = /^MOO\/([0-9]+) ([A-Z]+) (.*)/
+        let firstLineRegex = #/^MOO\/([0-9]+) ([A-Z]+) (.*)/#
         guard let matches = lines.first?.matches(of: firstLineRegex).first else {
             throw MooDecodeError.badFirstLine
         }
@@ -58,7 +58,7 @@ class MooDecoder {
         let service: String?
         let name: String
         if verb == .request {
-            let requestRegex = /([^\/]+)\/(.*)/
+            let requestRegex = #/([^\/]+)\/(.*)/#
             guard let requestMatches = matches.output.3.matches(of: requestRegex).first else {
                 throw MooDecodeError.badFirstLine
             }
@@ -76,7 +76,7 @@ class MooDecoder {
         }
 
         let headers = try lines[1..<endOfHeaders].reduce(into: [MooHeaderName: String]()) { partialResult, line in
-            let headerRegex = /([^:]+): *(.*)/
+            let headerRegex = #/([^:]+): *(.*)/#
             guard let headerMatches = line.matches(of: headerRegex).first else {
                 throw MooDecodeError.badHeaderLine
             }
