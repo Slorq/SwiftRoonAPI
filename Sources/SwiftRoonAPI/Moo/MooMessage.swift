@@ -7,13 +7,13 @@
 
 import Foundation
 
-enum MooVerb: String {
+public enum MooVerb: String {
     case complete = "COMPLETE"
     case `continue` = "CONTINUE"
     case request = "REQUEST"
 }
 
-typealias MooName = String
+public typealias MooName = String
 extension MooName {
     static var info: MooName { "com.roonlabs.registry:1/info" }
     static var invalidRequest: MooName { "InvalidRequest" }
@@ -25,7 +25,7 @@ extension MooName {
     static var unsubscribed: MooName = "Unsubscribed"
 }
 
-enum MooHeaderName: String {
+public enum MooHeaderName: String {
     case contentLength = "Content-Length"
     case contentType = "Content-Type"
     case logging = "Logging"
@@ -36,13 +36,13 @@ extension String {
     static var applicationJson: String { "application/json" }
 }
 
-struct MooMessage {
-    var requestID: Int
-    var verb: MooVerb
-    var name: MooName
-    var service: String?
-    var headers: [MooHeaderName: String]
-    var body: Data?
+public struct MooMessage {
+    public var requestID: Int
+    public var verb: MooVerb
+    public var name: MooName
+    public var service: String?
+    public var headers: [MooHeaderName: String]
+    public var body: Data?
 
     init(requestID: Int,
          verb: MooVerb,

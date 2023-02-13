@@ -17,10 +17,10 @@ struct RoonServices {
     let provided: [RoonServiceName]
 }
 
-class RoonAPI: NSObject {
+public class RoonAPI: NSObject {
 
-    typealias RoonCoreCompletionHandler = (RoonCore) -> Void
-    typealias ErrorCompletionHandler = (Error) -> Void
+    public typealias RoonCoreCompletionHandler = (RoonCore) -> Void
+    public typealias RoonErrorCompletionHandler = (Error) -> Void
 
     private let logger: Logger
     private var moo: Moo!
@@ -35,13 +35,13 @@ class RoonAPI: NSObject {
     private var serviceRequestHandlers: [String: (Moo, MooMessage?) -> Void] = [:]
     private var pairingService: PairingServiceRegistry?
     private var servicesOpts: ([ServiceRegistry], [ServiceRegistry], [ServiceRegistry])?
-    var coreFound: RoonCoreCompletionHandler?
-    var coreLost: RoonCoreCompletionHandler?
-    var corePaired: RoonCoreCompletionHandler?
-    var coreUnpaired: RoonCoreCompletionHandler?
-    var onError: ErrorCompletionHandler?
+    public var coreFound: RoonCoreCompletionHandler?
+    public var coreLost: RoonCoreCompletionHandler?
+    public var corePaired: RoonCoreCompletionHandler?
+    public var coreUnpaired: RoonCoreCompletionHandler?
+    public var onError: RoonErrorCompletionHandler?
 
-    init(options: RoonOptions) {
+    public init(options: RoonOptions) {
         self.logger = .init(enabled: true)
         self.options = options
         self.extensionRegInfo = .init(options: options)
@@ -49,7 +49,7 @@ class RoonAPI: NSObject {
         super.init()
     }
 
-    func startDiscovery() {
+    public func startDiscovery() {
         guard sood == nil else { return }
         let sood = Sood()
         self.sood = sood
@@ -58,7 +58,7 @@ class RoonAPI: NSObject {
         sood.start { [weak self] in self?.onSoodStart() }
     }
 
-    func initServices(optionalServices: [ServiceRegistry] = [],
+    public func initServices(optionalServices: [ServiceRegistry] = [],
                       requiredServices: [ServiceRegistry] = [],
                       providedServices: [ServiceRegistry] = []) throws {
         let optionalServices = optionalServices
@@ -156,7 +156,7 @@ class RoonAPI: NSObject {
         self.servicesOpts = (optionalServices, requiredServices, providedServices)
     }
 
-    func registerService(serviceName: String, specs: RoonServiceSpecs) -> RegisteredService {
+    public func registerService(serviceName: String, specs: RoonServiceSpecs) -> RegisteredService {
         let registeredService = RegisteredService()
 
         specs.subscriptions.forEach { s in

@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct RoonOptions {
+public struct RoonOptions {
 
     let displayName: String
     let displayVersion: String
@@ -19,7 +19,7 @@ struct RoonOptions {
     var requiredServices: [RoonService] = []
     let website: String
 
-    init(displayName: String,
+    public init(displayName: String,
          displayVersion: String,
          email: String,
          extensionID: String,

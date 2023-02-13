@@ -22,7 +22,10 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "SwiftRoonAPI",
-            dependencies: ["CocoaAsyncSocket"]),
+            dependencies: ["CocoaAsyncSocket"],
+            swiftSettings: [
+                .unsafeFlags(["-suppress-warnings"]),
+            ]),
         .testTarget(
             name: "SwiftRoonAPITests",
             dependencies: ["SwiftRoonAPI"]),

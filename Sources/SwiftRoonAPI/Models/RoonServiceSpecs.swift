@@ -7,7 +7,7 @@
 
 import Foundation
 
-class RoonServiceSpecs {
+public class RoonServiceSpecs {
     let subscriptions: [Subscription]
     var methods: [String: (Moo, MooMessage) -> Void] = [:]
 
@@ -38,7 +38,7 @@ extension RoonServiceSpecs {
 
 }
 
-class RegisteredService {
+public class RegisteredService {
     var name: String?
     var subtypes: [String: [Int: [String: SubscriptionMessageHandler]]]
 
@@ -72,7 +72,7 @@ class RegisteredService {
     }
 }
 
-class ServiceRegistry {
+public class ServiceRegistry {
     var services: [RegisteredService] = []
 
     init(services: [RegisteredService]) {

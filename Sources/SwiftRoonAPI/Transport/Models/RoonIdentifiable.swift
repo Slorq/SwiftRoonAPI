@@ -7,6 +7,6 @@
 
 import Foundation
 
-protocol RoonIdentifiable {
+public protocol RoonIdentifiable {
     var id: String { get }
 }

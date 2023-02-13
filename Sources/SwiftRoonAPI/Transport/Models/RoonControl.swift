@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum RoonControl: String {
+public enum RoonControl: String {
     case play
     case pause
     case playpause

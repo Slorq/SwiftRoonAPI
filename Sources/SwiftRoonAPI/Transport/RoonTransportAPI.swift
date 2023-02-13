@@ -15,22 +15,22 @@ extension RoonServiceName {
     static let transport = "com.roonlabs.transport:2"
 }
 
-class RoonTransportAPI: ServiceRegistry {
+public class RoonTransportAPI: ServiceRegistry {
 
-    convenience init(roonAPI: RoonAPI) {
+    public convenience init(roonAPI: RoonAPI) {
         self.init(services: [.init(name: .transport)])
     }
 
 }
 
-enum SeekHow: String {
+public enum SeekHow: String {
     case absolute
     case relative
 }
 
 extension RoonTransportAPI {
 
-    class TransportService {
+    public class TransportService {
 
         private let core: RoonCore
         private var zones: [String: RoonZone] = [:]
@@ -128,7 +128,7 @@ extension RoonTransportAPI {
          * @param {number} seconds - The target seek position
          * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
          */
-        func seek(identifiable: RoonIdentifiable, how: SeekHow, seconds: Double, completion: @escaping (MooMessage?) -> Void) {
+        public func seek(identifiable: RoonIdentifiable, how: SeekHow, seconds: Double, completion: @escaping (MooMessage?) -> Void) {
             let body = "{\"zone_or_output_id\": \"\(identifiable.id)\", \"how\": \"\(how.rawValue)\", \"seconds\": \(seconds)}"
                 .data(using: .utf8)!
             core.moo.sendRequest(name: .transport + "/seek", body: body, completion: completion)
@@ -152,7 +152,7 @@ extension RoonTransportAPI {
          * "next" - Advance to the next track
          *
          */
-        func control(identifiable: RoonIdentifiable, control: RoonControl, completion: ((MooMessage?) -> Void)?) {
+        public func control(identifiable: RoonIdentifiable, control: RoonControl, completion: ((MooMessage?) -> Void)?) {
             let body = "{\"zone_or_output_id\": \"\(identifiable.id)\", \"control\": \"\(control.rawValue)\"}"
                 .data(using: .utf8)!
             core.moo.sendRequest(name: .transport + "/control", body: body, completion: completion)
@@ -203,7 +203,7 @@ extension RoonTransportAPI {
             assertionFailure("TODO")
         }
 
-        func getZones(completion: (([RoonZone]) -> Void)?) {
+        public func getZones(completion: (([RoonZone]) -> Void)?) {
             core.moo.sendRequest(name: .transport + "/get_zones") { message in
                 guard let body = message?.body,
                       let response = try? Self.decoder.decode(GetZonesResponse.self, from: body) else {
@@ -215,7 +215,7 @@ extension RoonTransportAPI {
             }
         }
 
-        func getOutputs(completion: (([RoonOutput]) -> Void)?) {
+        public func getOutputs(completion: (([RoonOutput]) -> Void)?) {
             core.moo.sendRequest(name: .transport + "/get_outputs") { message in
                 let decoder = JSONDecoder()
                 decoder.keyDecodingStrategy = .convertFromSnakeCase
@@ -229,7 +229,7 @@ extension RoonTransportAPI {
             }
         }
 
-        func subscribeZones(completion: (([RoonZone]) -> Void)?) {
+        public func subscribeZones(completion: (([RoonZone]) -> Void)?) {
             core.moo.subscribeHelper(serviceName: .transport,
                                      requestName: TransportRequest.zones) { [weak self] message in
                 guard let self,
@@ -298,7 +298,7 @@ extension RoonTransportAPI {
 
 extension RoonCore {
 
-    var transport: RoonTransportAPI.TransportService {
+    public var transport: RoonTransportAPI.TransportService {
         .init(core: self)
     }
 

@@ -7,7 +7,7 @@
 
 import Foundation
 
-class RoonCore: Codable {
+public class RoonCore: Codable {
     let coreID: String
     let displayName: String
     let displayVersion: String

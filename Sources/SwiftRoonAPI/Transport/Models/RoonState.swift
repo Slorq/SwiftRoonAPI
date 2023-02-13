@@ -7,7 +7,7 @@
 
 import Foundation
 
-enum RoonState: String, Codable {
+public enum RoonState: String, Codable {
     case playing
     case paused
     case loading

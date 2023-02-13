@@ -7,52 +7,52 @@
 
 import Foundation
 
-struct RoonZone: Codable {
-    let displayName: String
-    let isNextAllowed: Bool
-    let isPauseAllowed: Bool
-    let isPlayAllowed: Bool
-    let isPreviousAllowed: Bool
-    let isSeekAllowed: Bool
-    var nowPlaying: NowPlaying?
-    let outputs: [RoonOutput]
-    let queueItemsRemaining: Double
-    var queueTimeRemaining: Double
-    let settings: Settings
-    let state: RoonState
+public struct RoonZone: Codable, RoonIdentifiable {
+    public let displayName: String
+    public let isNextAllowed: Bool
+    public let isPauseAllowed: Bool
+    public let isPlayAllowed: Bool
+    public let isPreviousAllowed: Bool
+    public let isSeekAllowed: Bool
+    public var nowPlaying: NowPlaying?
+    public let outputs: [RoonOutput]
+    public let queueItemsRemaining: Double
+    public var queueTimeRemaining: Double
+    public let settings: Settings
+    public let state: RoonState
     let zoneId: String
 }
 
-extension RoonZone: RoonIdentifiable {
-    var id: String { zoneId }
+extension RoonZone {
+    public var id: String { zoneId }
 }
 
-extension RoonZone {
+public extension RoonZone {
 
     struct NowPlaying: Codable {
-        let artistImageKeys: [String]
-        let imageKey: String?
-        let length: Double
-        let oneLine: DisplayLines
-        var seekPosition: Double?
-        let threeLine: DisplayLines
-        let twoLine: DisplayLines
+        public let artistImageKeys: [String]
+        public let imageKey: String?
+        public let length: Double
+        public let oneLine: DisplayLines
+        public var seekPosition: Double?
+        public let threeLine: DisplayLines
+        public let twoLine: DisplayLines
     }
 
     struct Settings: Codable {
-        let autoRadio: Bool
-        let loop: String
-        let shuffle: Bool
+        public let autoRadio: Bool
+        public let loop: String
+        public let shuffle: Bool
     }
 
 }
 
-extension RoonZone.NowPlaying {
+public extension RoonZone.NowPlaying {
 
     struct DisplayLines: Codable {
-        let line1: String?
-        let line2: String?
-        let line3: String?
+        public let line1: String?
+        public let line2: String?
+        public let line3: String?
     }
 
 }
