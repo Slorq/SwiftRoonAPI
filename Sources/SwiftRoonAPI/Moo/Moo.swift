@@ -1,0 +1,154 @@
+//
+//  Moo.swift
+//  RoonMiniPlayer
+//
+//  Created by Alejandro Maya on 5/12/22.
+//
+
+import Foundation
+
+class Moo: NSObject {
+
+    private static var counter = 0
+
+    private let transport: Transport
+    private var requestID = 0
+    private var subKey = 0
+    private let logger: Logger
+    private var requestHandlers: [Int: (MooMessage?) -> Void] = [:]
+    private let mooEncoder: MooEncoder
+    private let mooDecoder: MooDecoder
+    let mooID: Int
+    var onOpen: ((Moo) -> Void)?
+    var onClose: ((Moo) -> Void)?
+    var onError: ((Moo, Error) -> Void)?
+    var onMessage: ((Moo, MooMessage) -> Void)?
+    var core: RoonCore? {
+        didSet {
+            core?.moo = self
+        }
+    }
+
+    init(transport: Transport, logger: Logger) {
+        Self.counter += 1
+        self.mooID = Self.counter
+        self.transport = transport
+        self.logger = logger
+        self.mooEncoder = MooEncoder(logger: .init(enabled: false))
+        self.mooDecoder = MooDecoder(logger: .init(enabled: false))
+
+        super.init()
+
+        transport.delegate = self
+    }
+
+    func connectWebSocket() {
+        transport.resume()
+    }
+
+    func sendRequest(name: MooName, body: Data? = nil, contentType: String? = nil, completion: ((MooMessage?) -> Void)?) {
+        let headers: [MooHeaderName: String] = contentType.map { [.contentType: $0] } ?? [:]
+        let message = MooMessage(requestID: requestID,
+                                 verb: .request,
+                                 name: name,
+                                 headers: headers,
+                                 body: body)
+        send(message: message, completion: completion)
+    }
+
+    func sendComplete(_ name: MooName = .success, body: Data? = nil, message: MooMessage, completion: ((MooMessage?) -> Void)? = nil) {
+        let message = MooMessage(requestID: message.requestID,
+                                 verb: .complete,
+                                 name: name,
+                                 headers: [:])
+        send(message: message, completion: completion)
+    }
+
+    func sendContinue(_ name: MooName = .success, body: Data? = nil, message: MooMessage, completion: ((MooMessage?) -> Void)? = nil) {
+        let message = MooMessage(requestID: message.requestID,
+                                 verb: .continue,
+                                 name: name,
+                                 headers: [:])
+        send(message: message, completion: completion)
+    }
+
+    func subscribeHelper(serviceName: String, requestName: String, body: Data? = nil, completion: ((MooMessage?) -> Void)?) {
+        subKey += 1
+        var jsonBody = body.flatMap { try? JSONSerialization.jsonObject(with: $0, options: []) } as? [String: Any] ?? [:]
+        jsonBody["subscription_key"] = subKey
+        let body = try? JSONSerialization.data(withJSONObject: jsonBody)
+        let name = "\(serviceName)/subscribe_\(requestName)"
+        sendRequest(name: name, body: body, contentType: nil, completion: completion)
+    }
+
+    func cleanUp() {
+        requestHandlers.forEach { key, handler in
+            handler(nil)
+        }
+        requestHandlers = [:]
+    }
+
+    func handleMessage(message: MooMessage) -> Bool {
+        logger.log("Moo <- \(message.verb.rawValue) \(message.requestID) \(message.name)")
+        if let handler = requestHandlers[message.requestID] {
+            handler(message)
+            if message.verb == .complete {
+                requestHandlers[message.requestID] = nil
+            }
+            return true
+        } else {
+            return false
+        }
+    }
+
+    func closeTransport() {
+        transport.close()
+    }
+
+    private func send(message: MooMessage, completion: ((MooMessage?) -> Void)?) {
+        logger.log("Moo -> sendMessage -> \(message.verb.rawValue) \(message.requestID) \(message.name)")
+        if let data = mooEncoder.encode(message: message) {
+            transport.send(data: data)
+            requestHandlers[requestID] = completion
+            requestID += 1
+        }
+    }
+
+}
+
+extension Moo: TransportDelegate {
+
+    func transportDidOpen(_ transport: Transport) {
+        logger.log("Moo - didOpen")
+        onOpen?(self)
+    }
+
+    func transportDidClose(_ transport: Transport) {
+        logger.log("Moo - didClose")
+        onClose?(self)
+    }
+
+    func transport(_ transport: Transport, didReceiveError error: Error) {
+        logger.log("Moo - error - \(error)")
+        onError?(self, error)
+    }
+
+    func transport(_ transport: Transport, didReceiveData data: Data) {
+        do {
+            guard let message = try mooDecoder.decode(data) else { return }
+            onMessage?(self, message)
+        } catch {
+            assertionFailure("Need to handle error \(error)")
+        }
+    }
+
+    func transport(_ transport: Transport, didReceiveString string: String) {
+        do {
+            guard let message = try mooDecoder.decode(string) else { return }
+            onMessage?(self, message)
+        } catch {
+            assertionFailure("Need to handle error \(error)")
+        }
+    }
+
+}
