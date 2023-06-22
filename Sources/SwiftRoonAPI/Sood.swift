@@ -150,50 +150,6 @@ class Sood: NSObject {
         }
     }
 
-    func getIFAddresses() -> [NetInfo] {
-        var addresses = [NetInfo]()
-        var ifaddr : UnsafeMutablePointer<ifaddrs>?
-        guard getifaddrs(&ifaddr) == 0 else { return [] }
-        guard let firstAddr = ifaddr else { return [] }
-
-        for ptr in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
-            let flags = Int32(ptr.pointee.ifa_flags)
-            let addr = ptr.pointee.ifa_addr.pointee
-
-            guard let net = ptr.pointee.ifa_netmask?.pointee else { continue }
-
-            if (flags & (IFF_UP|IFF_RUNNING|IFF_LOOPBACK)) == (IFF_UP|IFF_RUNNING) {
-                if addr.sa_family == UInt8(AF_INET) { //  || addr.sa_family == UInt8(AF_IN) -> for IPv6
-
-                    var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                    var netmaskName = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                    let getHostname = getnameinfo(ptr.pointee.ifa_addr,
-                                                  socklen_t(addr.sa_len),
-                                                  &hostname,
-                                                  socklen_t(hostname.count),
-                                                  nil,
-                                                  socklen_t(0),
-                                                  NI_NUMERICHOST)
-                    getnameinfo(ptr.pointee.ifa_netmask,
-                                socklen_t(net.sa_len),
-                                &netmaskName,
-                                socklen_t(netmaskName.count),
-                                nil,
-                                socklen_t(0),
-                                NI_NUMERICHOST)
-                    if (getHostname == 0) {
-                        let address = String(cString: hostname)
-                        let mask = String(cString: netmaskName)
-                        addresses.append(.init(ip: address, netmask: mask))
-                    }
-                }
-            }
-        }
-
-        freeifaddrs(ifaddr)
-        return addresses
-    }
-
     private func parse(data: Data, messageInfo: MessageInfo) -> SoodMessage? {
         guard var messageString = String(data: data, encoding: .utf8) else { return nil }
 
@@ -305,6 +261,50 @@ class Sood: NSObject {
         multicast[netInfo.ip] = interface
 
         return newInterface
+    }
+
+    func getIFAddresses() -> [NetInfo] {
+        var addresses = [NetInfo]()
+        var ifaddr : UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&ifaddr) == 0 else { return [] }
+        guard let firstAddr = ifaddr else { return [] }
+
+        for ptr in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
+            let flags = Int32(ptr.pointee.ifa_flags)
+            let addr = ptr.pointee.ifa_addr.pointee
+
+            guard let net = ptr.pointee.ifa_netmask?.pointee else { continue }
+
+            if (flags & (IFF_UP|IFF_RUNNING|IFF_LOOPBACK)) == (IFF_UP|IFF_RUNNING) {
+                if addr.sa_family == UInt8(AF_INET) { //  || addr.sa_family == UInt8(AF_IN) -> for IPv6
+
+                    var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                    var netmaskName = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                    let getHostname = getnameinfo(ptr.pointee.ifa_addr,
+                                                  socklen_t(addr.sa_len),
+                                                  &hostname,
+                                                  socklen_t(hostname.count),
+                                                  nil,
+                                                  socklen_t(0),
+                                                  NI_NUMERICHOST)
+                    getnameinfo(ptr.pointee.ifa_netmask,
+                                socklen_t(net.sa_len),
+                                &netmaskName,
+                                socklen_t(netmaskName.count),
+                                nil,
+                                socklen_t(0),
+                                NI_NUMERICHOST)
+                    if (getHostname == 0) {
+                        let address = String(cString: hostname)
+                        let mask = String(cString: netmaskName)
+                        addresses.append(.init(ip: address, netmask: mask))
+                    }
+                }
+            }
+        }
+
+        freeifaddrs(ifaddr)
+        return addresses
     }
 
 }

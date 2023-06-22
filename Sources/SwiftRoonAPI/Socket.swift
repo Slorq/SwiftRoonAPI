@@ -18,6 +18,8 @@ class Socket: NSObject {
     var onClose: (() -> Void)?
     var onMessage: ((Data, MessageInfo) -> Void)?
     private let socket: GCDAsyncUdpSocket
+    private let address: String?
+    private let port: UInt16
 
     init(port: UInt16,
          address: String? = nil,
@@ -26,6 +28,8 @@ class Socket: NSObject {
          joinMulticastGroup multicastGroup: String? = nil,
          onInterface interface: String? = nil) throws {
         do {
+            self.address = address
+            self.port = port
             let socket = GCDAsyncUdpSocket()
             self.socket = socket
             super.init()
