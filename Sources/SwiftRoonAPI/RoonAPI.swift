@@ -56,6 +56,7 @@ public class RoonAPI: NSObject {
         sood.onMessage = { [weak self] in self?.onSoodMessage($0) }
         sood.onNetwork = { [weak self] in self?.onSoodNetwork() }
         sood.start { [weak self] in self?.onSoodStart() }
+        logger.log("Start discovery")
     }
 
     public func initServices(optionalServices: [ServiceRegistry] = [],
