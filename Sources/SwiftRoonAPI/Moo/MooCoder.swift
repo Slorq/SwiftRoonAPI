@@ -21,11 +21,7 @@ enum MooDecodeError: Error {
 
 class MooDecoder {
 
-    private let logger: Logger
-
-    init(logger: Logger) {
-        self.logger = logger
-    }
+    private let logger = Logger()
 
     func decode(_ data: Data) throws -> MooMessage? {
         guard !data.isEmpty else {
@@ -105,14 +101,10 @@ class MooDecoder {
 
 class MooEncoder {
 
-    private let logger: Logger
-
-    init(logger: Logger) {
-        self.logger = logger
-    }
+    private let logger = Logger()
 
     func encode(message: MooMessage) -> Data? {
-        logger.log("MooEncoder - encode - \(message)")
+        logger.log(level: .debug, "MooEncoder - encode - \(message)")
         let name = message.name
         let requestID = message.requestID
         let body = message.body

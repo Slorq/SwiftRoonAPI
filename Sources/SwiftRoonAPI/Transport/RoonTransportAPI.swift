@@ -32,6 +32,7 @@ extension RoonTransportAPI {
 
     public class TransportService {
 
+        private let logger = Logger()
         private let core: RoonCore
         private var zones: [String: RoonZone] = [:]
         private static let decoder: JSONDecoder = {
@@ -50,7 +51,7 @@ extension RoonTransportAPI {
          * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
          */
         func muteAll() {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         /**
@@ -58,7 +59,7 @@ extension RoonTransportAPI {
          * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
          */
         func pauseAll() {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         /**
@@ -70,7 +71,7 @@ extension RoonTransportAPI {
          * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
          */
         func standBy() {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         /**
@@ -82,7 +83,7 @@ extension RoonTransportAPI {
          * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
          */
         func toggleStandBy() {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         /**
@@ -94,7 +95,7 @@ extension RoonTransportAPI {
          * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
          */
         func convenienceSwitch() {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         /**
@@ -104,7 +105,7 @@ extension RoonTransportAPI {
          * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
          */
         func mute() {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         /**
@@ -118,7 +119,7 @@ extension RoonTransportAPI {
          * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
          */
         func changeVolume() {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         /**
@@ -166,7 +167,7 @@ extension RoonTransportAPI {
          * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
          */
         func transferZone() {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         /**
@@ -176,7 +177,7 @@ extension RoonTransportAPI {
          * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
          */
         func groupOutputs() {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         /**
@@ -186,7 +187,7 @@ extension RoonTransportAPI {
          * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
          */
         func ungroupOutputs() {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         /**
@@ -200,7 +201,7 @@ extension RoonTransportAPI {
          * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
          */
         func changeSettings() {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         public func getZones(completion: (([RoonZone]) -> Void)?) {
@@ -262,7 +263,8 @@ extension RoonTransportAPI {
                 case .unsubscribed:
                     self.zones = [:]
                 default:
-                    print("Unrecognized name \(message.verb)")
+                    logger.log("Unrecognized name \(message.verb)")
+                    assertionFailure("Unrecognized name \(message.verb)")
                 }
 
                 completion?(Array(self.zones.values))
@@ -270,27 +272,27 @@ extension RoonTransportAPI {
         }
 
         func subscribeOutputs() {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         func subscribeQueue() {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         func playFromHere() {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         func zone(byZoneID zoneID: String) {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         func zone(byOutputID outputID: String) {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
         func zone(byObject objectID: String) {
-            assertionFailure("TODO")
+            logger.log(level: .error, "Not implemented \(#function)")
         }
 
     }

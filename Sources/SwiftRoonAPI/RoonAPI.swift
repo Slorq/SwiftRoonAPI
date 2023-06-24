@@ -22,7 +22,7 @@ public class RoonAPI: NSObject {
     public typealias RoonCoreCompletionHandler = (RoonCore) -> Void
     public typealias RoonErrorCompletionHandler = (Error) -> Void
 
-    private let logger: Logger
+    private let logger = Logger()
     private var moo: Moo!
     private var options: RoonOptions
     private var extensionRegInfo: RoonExtensionRegInfo
@@ -42,7 +42,6 @@ public class RoonAPI: NSObject {
     public var onError: RoonErrorCompletionHandler?
 
     public init(options: RoonOptions) {
-        self.logger = .init(enabled: true)
         self.options = options
         self.extensionRegInfo = .init(options: options)
 
@@ -158,6 +157,7 @@ public class RoonAPI: NSObject {
     }
 
     public func registerService(serviceName: String, specs: RoonServiceSpecs) -> RegisteredService {
+        logger.log(level: .info, "Registering service \(serviceName)")
         let registeredService = RegisteredService()
 
         specs.subscriptions.forEach { s in
@@ -220,12 +220,14 @@ public class RoonAPI: NSObject {
 
     private func periodicScan() {
         scanCount += 1
+        logger.log("Periodic scan \(scanCount)")
         guard !isPaired else { return }
         guard scanCount < 0 || scanCount % 6 == 0 else { return }
         sood?.query(serviceId: roonServiceID)
     }
 
     private func onSoodStart() {
+        logger.log("Starting sood")
         sood?.query(serviceId: roonServiceID)
         periodicScanSubscription = Timer.publish(every: 10, on: .current, in: .default)
             .autoconnect()
@@ -237,6 +239,7 @@ public class RoonAPI: NSObject {
     }
 
     private func onSoodMessage(_ message: SoodMessage) {
+        logger.log(message)
         guard message.props.serviceId == roonServiceID, let propsUniqueId = message.props.uniqueId else { return }
         guard soodConnections[propsUniqueId] == nil else { return }
 
@@ -256,10 +259,11 @@ public class RoonAPI: NSObject {
             self?.onError?($0)
         })
 
-        print(".** soodConnections \(soodConnections)")
+        logger.log("Sood connections \(soodConnections)")
     }
 
     private func onSoodNetwork() {
+        logger.log("Sood on network")
         sood?.query(serviceId: roonServiceID)
     }
 
@@ -267,8 +271,9 @@ public class RoonAPI: NSObject {
                            httpPort: UInt16,
                            onClose: @escaping () -> Void,
                            onError: @escaping (Error) -> Void) -> Moo {
-        let transport = try! Transport(host: hostIP, port: httpPort, logger: .init(enabled: false))
-        let moo = Moo(transport: transport, logger: .init(enabled: true))
+        logger.log("Sood WS Connect \(hostIP):\(httpPort)")
+        let transport = try! Transport(host: hostIP, port: httpPort)
+        let moo = Moo(transport: transport)
 
         moo.onOpen = { [weak self] moo in
             guard let self else { return }
@@ -321,10 +326,10 @@ public class RoonAPI: NSObject {
                 if !moo.handleMessage(message: message) {
                     moo.closeTransport()
                 }
-            }
+            } 
         }
-        moo.onError = { [weak logger] moo, error in
-            logger?.log("moo.onError")
+        moo.onError = { [logger] moo, error in
+            logger.log("moo.onError")
             onError(error)
         }
         moo.connectWebSocket()

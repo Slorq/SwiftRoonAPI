@@ -49,6 +49,7 @@ extension SoodMessage {
 
 class Sood: NSObject {
 
+    private let logger = Logger()
     private static let soodMulticastIP = "239.255.90.90"
     private static let soodPort: UInt16 = 9003
     private var interfaceSequence = 0
@@ -67,6 +68,7 @@ class Sood: NSObject {
     }
 
     func stop() {
+        logger.log("Stoping Sood")
         interfaceTimer = nil
         multicast.forEach { (key, value) in
             value.sendSocket?.close()
@@ -109,6 +111,7 @@ class Sood: NSObject {
     }
 
     private func initSocket(_ onStart: (() -> Void)?) {
+        logger.log("Init socket")
         interfaceSequence += 1
         var interfaceChange = false
         let interfaces = getIFAddresses()
@@ -127,6 +130,7 @@ class Sood: NSObject {
         }
 
         if unicast.sendSocket == nil {
+            logger.log("Creating unicast")
             do {
                 let socket = try Socket(port: 0, enableBroadcast: true)
                 socket.onError = { [weak socket] error in

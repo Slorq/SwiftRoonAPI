@@ -14,7 +14,7 @@ class Moo: NSObject {
     private let transport: Transport
     private var requestID = 0
     private var subKey = 0
-    private let logger: Logger
+    private let logger = Logger()
     private var requestHandlers: [Int: (MooMessage?) -> Void] = [:]
     private let mooEncoder: MooEncoder
     private let mooDecoder: MooDecoder
@@ -29,13 +29,12 @@ class Moo: NSObject {
         }
     }
 
-    init(transport: Transport, logger: Logger) {
+    init(transport: Transport) {
         Self.counter += 1
         self.mooID = Self.counter
         self.transport = transport
-        self.logger = logger
-        self.mooEncoder = MooEncoder(logger: .init(enabled: false))
-        self.mooDecoder = MooDecoder(logger: .init(enabled: false))
+        self.mooEncoder = MooEncoder()
+        self.mooDecoder = MooDecoder()
 
         super.init()
 

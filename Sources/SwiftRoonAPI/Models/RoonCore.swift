@@ -8,6 +8,7 @@
 import Foundation
 
 public class RoonCore: Codable {
+
     let coreID: String
     let displayName: String
     let displayVersion: String

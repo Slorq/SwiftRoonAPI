@@ -25,20 +25,19 @@ class Transport: NSObject {
 
     private let host: String
     private let port: UInt16
-    private let logger: Logger
+    private let logger = Logger()
     private let webSocket: URLSessionWebSocketTask
     private var isAlive = false
     private var timer: Cancellable?
     weak var delegate: TransportDelegate?
 
-    init(host: String, port: UInt16, logger: Logger) throws {
+    init(host: String, port: UInt16) throws {
         guard let url = URL(string: "ws://\(host):\(port)/api") else {
             throw TransportError.invalidURL
         }
 
         self.host = host
         self.port = port
-        self.logger = logger
         self.webSocket = URLSession.shared.webSocketTask(with: url)
 
         super.init()
