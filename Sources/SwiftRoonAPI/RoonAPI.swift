@@ -248,9 +248,9 @@ public class RoonAPI: NSObject {
         guard var ip = message.from.ip,
               let port = message.props.httpPort?.toInt() else { return }
 
-        let ipAddresses = NetworkInterfacesProvider().ipAddresses()
-        ipAddresses.forEach { ipAddress in
-            if ip == ipAddress {
+        let interfaces = NetworkInterfacesProvider.interfaces
+        interfaces.forEach { interface in
+            if ip == interface.ip {
                 ip = "127.0.0.1"
             }
         }

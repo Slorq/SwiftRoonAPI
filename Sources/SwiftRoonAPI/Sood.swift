@@ -19,8 +19,8 @@ class Sood: NSObject {
     private var interfaceSequence = 0
     private var interfaceTimer: AnyCancellable?
     private var multicast: [String: MulticastInterface] = [:]
-    private var unicast: UnicastInterface = .init(sendSocket: nil, interfaceSequence: 0)
     private var onStart: (() -> Void)?
+    private var unicast: UnicastInterface = .init(sendSocket: nil, interfaceSequence: 0)
     var onMessage: ((SoodMessage) -> Void)?
     var onNetwork: (() -> Void)?
 
@@ -78,7 +78,7 @@ class Sood: NSObject {
         logger.log("Init socket")
         interfaceSequence += 1
         var interfaceChange = false
-        let interfaces = NetworkInterface.getIFAddresses()
+        let interfaces = NetworkInterfacesProvider.interfaces
 
         interfaces.forEach { interface in
             if listenInterface(netInfo: interface) {
