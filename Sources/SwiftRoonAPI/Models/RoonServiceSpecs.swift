@@ -8,6 +8,7 @@
 import Foundation
 
 public class RoonServiceSpecs {
+
     let subscriptions: [Subscription]
     var methods: [String: (Moo, MooMessage) -> Void] = [:]
 
@@ -15,6 +16,7 @@ public class RoonServiceSpecs {
         self.subscriptions = subscriptions
         self.methods = methods
     }
+    
 }
 
 extension RoonServiceSpecs {

@@ -8,9 +8,11 @@
 import Foundation
 
 struct SoodMessage {
+
     let props: Props
     let from: From
     let type: String
+
 }
 
 extension SoodMessage {
@@ -44,4 +46,5 @@ extension SoodMessage {
         var ip: String?
         var port: UInt16
     }
+    
 }

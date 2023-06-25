@@ -8,5 +8,7 @@
 import Foundation
 
 struct SubscriptionBody: Codable {
+
     let subscriptionKey: String
+
 }

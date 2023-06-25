@@ -24,18 +24,19 @@ public class RoonAPI: NSObject {
     public typealias RoonErrorCompletionHandler = (Error) -> Void
 
     private let logger = Logger()
+    private let registeredServiceHandler = RegisteredServiceHandler()
+    private var extensionRegInfo: RoonExtensionRegInfo
+    private var isPaired = false
     private var moo: Moo!
     private var options: RoonOptions
-    private var extensionRegInfo: RoonExtensionRegInfo
-    private var periodicScanSubscription: AnyCancellable?
-    private var sood: Sood?
-    private var scanCount = 0
-    private var soodConnections: [String: Moo] = [:]
     private var pairedCore: RoonCore?
-    private var isPaired = false
-    private var serviceRequestHandlers: [String: (Moo, MooMessage?) -> Void] = [:]
     private var pairingService: PairingServiceRegistry?
+    private var periodicScanSubscription: AnyCancellable?
+    private var scanCount = 0
+    private var serviceRequestHandlers: [String: (Moo, MooMessage?) -> Void] = [:]
     private var servicesOpts: ([ServiceRegistry], [ServiceRegistry], [ServiceRegistry])?
+    private var sood: Sood?
+    private var soodConnections: [String: Moo] = [:]
     public var coreFound: RoonCoreCompletionHandler?
     public var coreLost: RoonCoreCompletionHandler?
     public var corePaired: RoonCoreCompletionHandler?
@@ -120,7 +121,7 @@ public class RoonAPI: NSObject {
                     self.isPaired = true
                     let bodyString = "{ \"paired_core_id\": \"\(core.coreID)\" }"
                     bodyString.data(using: .utf8).map {
-                        service.sendContinueAll(moo: core.moo, subtype: "subscribe_pairing", name: "Changed", body: $0)
+                        self.registeredServiceHandler.sendContinueAll(subtypes: service.subtypes, moo: core.moo, subtype: "subscribe_pairing", name: "Changed", body: $0)
                     }
                 }
                 if core.coreID == self.pairedCore?.coreID {
