@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftLogger
 
 enum MooDecodeError: Error {
     case badFirstLine

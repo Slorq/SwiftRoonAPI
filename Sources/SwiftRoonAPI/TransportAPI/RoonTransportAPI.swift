@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftLogger
 
 fileprivate struct RoonCoreAssociatedKeys {
     static var transport: UInt8 = 0

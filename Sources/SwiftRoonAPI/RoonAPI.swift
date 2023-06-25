@@ -7,6 +7,7 @@
 
 import class Combine.AnyCancellable
 import Foundation
+import SwiftLogger
 import SystemConfiguration
 
 private let roonServiceID = "00720724-5143-4a9b-abac-0e50cba674bb"

@@ -17,6 +17,7 @@ let package = Package(
             targets: ["SwiftRoonAPI"]),
     ],
     dependencies: [
+        .package(url: "https://github.com/Slorq/SwiftLogger.git", .upToNextMajor(from: "0.0.1")),
         .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", .upToNextMajor(from: "7.0.0")),
     ],
     targets: [
@@ -24,7 +25,7 @@ let package = Package(
         // Targets can depend on other targets in this package, and on products in packages this package depends on.
         .target(
             name: "SwiftRoonAPI",
-            dependencies: ["CocoaAsyncSocket"],
+            dependencies: ["CocoaAsyncSocket", "SwiftLogger"],
             swiftSettings: [
                 .unsafeFlags(["-suppress-warnings"]),
             ]),
