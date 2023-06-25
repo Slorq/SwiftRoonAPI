@@ -50,6 +50,7 @@ struct RoonExtensionRegInfo: Codable {
 }
 
 extension RoonExtensionRegInfo {
+    
     init(options: RoonOptions) {
         displayName = options.displayName
         displayVersion = options.displayVersion

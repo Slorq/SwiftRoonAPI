@@ -87,8 +87,3 @@ extension Socket: GCDAsyncUdpSocketDelegate {
         onClose?()
     }
 }
-
-struct MessageInfo {
-    let address: String?
-    let port: UInt16
-}

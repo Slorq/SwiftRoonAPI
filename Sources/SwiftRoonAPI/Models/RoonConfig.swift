@@ -8,10 +8,12 @@
 import Foundation
 
 struct RoonAuthorizationState: Codable {
+
     var tokens: [String: String]
 }
 
 struct RoonConfig: Codable {
+    
     var roonState: RoonAuthorizationState
     var pairedCoreID: String?
 }

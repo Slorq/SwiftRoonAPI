@@ -32,6 +32,10 @@ private extension UserDefaults {
         set { setValue(newValue, forKey: #function) }
     }
 
+}
+
+private extension UserDefaults {
+
     private func decodedValue<T: Codable>(forKey key: String) throws -> T? {
         guard let storedData = value(forKey: key) as? Data else {
             return nil
@@ -44,5 +48,4 @@ private extension UserDefaults {
         let encodedData = try JSONEncoder().encode(value)
         setValue(encodedData, forKey: key)
     }
-
 }
