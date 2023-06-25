@@ -51,18 +51,28 @@ public class RoonAPI: NSObject {
     }
 
     public func startDiscovery() {
-        guard sood == nil else { return }
+        guard sood == nil else {
+            logger.log(level: .warning, "Discovery has already been started")
+            return
+        }
+
+        logger.log(level: .info, "Starting discovery")
         let sood = Sood()
         self.sood = sood
         sood.onMessage = { [weak self] in self?.onSoodMessage($0) }
         sood.onNetwork = { [weak self] in self?.onSoodNetwork() }
         sood.start { [weak self] in self?.onSoodStart() }
-        logger.log("Start discovery")
     }
 
     public func initServices(optionalServices: [ServiceRegistry] = [],
-                      requiredServices: [ServiceRegistry] = [],
-                      providedServices: [ServiceRegistry] = []) throws {
+                             requiredServices: [ServiceRegistry] = [],
+                             providedServices: [ServiceRegistry] = []) throws {
+        logger.log(level: .info,
+                   logMessage(optionalServices: optionalServices,
+                              requiredServices: requiredServices,
+                              providedServices: providedServices)
+        )
+
         let optionalServices = optionalServices
         let requiredServices = requiredServices
         var providedServices = providedServices
@@ -75,12 +85,14 @@ public class RoonAPI: NSObject {
 
         if corePaired != nil {
             let onPairingStart: (Moo, MooMessage) -> Void = { [weak self] moo, request in
-                let bodyString = (self?.pairedCore?.coreID).map { "{\"paired_core_id\":\($0)}" }
-                moo.sendContinue(.subscribed, body: bodyString?.data(using: .utf8), message: request)
+                let pairedCore = (self?.pairedCore?.coreID).map { PairedCore(coreID: $0) }
+                let body = try? pairedCore?.jsonEncoded()
+                moo.sendContinue(.subscribed, body: body, message: request)
             }
             let getPairing: (Moo, MooMessage) -> Void = { [weak self] moo, request in
-                let bodyString = (self?.pairedCore?.coreID).map { "{\"paired_core_id\":\($0)}" }
-                moo.sendComplete(.success, body: bodyString?.data(using: .utf8), message: request)
+                let pairedCore = (self?.pairedCore?.coreID).map { PairedCore(coreID: $0) }
+                let body = try? pairedCore?.jsonEncoded()
+                moo.sendComplete(.success, body: body, message: request)
             }
             let pair: (Moo, MooMessage) -> Void = { [weak self] moo, request in
                 guard let self,
@@ -119,8 +131,10 @@ public class RoonAPI: NSObject {
 
                     self.pairedCore = core
                     self.isPaired = true
-                    let bodyString = "{ \"paired_core_id\": \"\(core.coreID)\" }"
-                    bodyString.data(using: .utf8).map {
+
+                    let pairedCore = PairedCore(coreID: core.coreID)
+                    let body = try? pairedCore.jsonEncoded()
+                    body.map {
                         self.registeredServiceHandler.sendContinueAll(subtypes: service.subtypes, moo: core.moo, subtype: "subscribe_pairing", name: "Changed", body: $0)
                     }
                 }
@@ -360,6 +374,21 @@ public class RoonAPI: NSObject {
         }
     }
 
+    private func logMessage(optionalServices: [ServiceRegistry],
+                            requiredServices: [ServiceRegistry],
+                            providedServices: [ServiceRegistry]) -> String {
+        var logMessage = "Initializing services\n"
+        if !optionalServices.isEmpty {
+            logMessage.append("\tOptional: \(optionalServices)\n")
+        }
+        if !requiredServices.isEmpty {
+            logMessage.append("\tRequired: \(requiredServices)\n")
+        }
+        if !providedServices.isEmpty {
+            logMessage.append("\tProvided: \(providedServices)")
+        }
+        return logMessage
+    }
 }
 
 extension URL {
