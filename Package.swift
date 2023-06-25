@@ -17,7 +17,7 @@ let package = Package(
             targets: ["SwiftRoonAPI"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/Slorq/SwiftLogger.git", .upToNextMajor(from: "0.0.1")),
+        .package(url: "git@github.com:Slorq/SwiftLogger.git", .upToNextMajor(from: "0.0.1")),
         .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", .upToNextMajor(from: "7.0.0")),
     ],
     targets: [
