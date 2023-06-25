@@ -9,7 +9,7 @@ import Foundation
 
 extension String {
 
-    /// Drops the prefix from the string and returns it
+    /// Drops the first k characters from the string and returns them
     mutating func droppingPrefix(_ k: Int) -> String {
         let prefix = prefix(k)
         droppingFirst(k)
@@ -25,7 +25,7 @@ extension String {
         Int(self)
     }
 
-    func toInts() -> [UInt8] {
-        split(separator: ".").map{UInt8(Int($0)!)}
+    func intComponents(separator: String = ".") -> [UInt8] {
+        split(separator: separator).map{UInt8(Int($0)!)}
     }
 }

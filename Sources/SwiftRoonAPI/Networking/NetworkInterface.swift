@@ -90,8 +90,8 @@ struct NetworkInterface {
     }
 
     private func bitwise(_ op: (UInt8,UInt8) -> UInt8, net1: String, net2: String) -> String {
-        let net1numbers = net1.toInts()
-        let net2numbers = net2.toInts()
+        let net1numbers = net1.intComponents()
+        let net2numbers = net2.intComponents()
         var result = ""
         for i in 0..<net1numbers.count {
             result += "\(op(net1numbers[i],net2numbers[i]))"
@@ -103,7 +103,7 @@ struct NetworkInterface {
     }
 
     private func bitwise(_ op: (UInt8) -> UInt8, net1: String) -> String {
-        let net1numbers = net1.toInts()
+        let net1numbers = net1.intComponents()
         var result = ""
         for i in 0..<net1numbers.count {
             result += "\(op(net1numbers[i]))"
