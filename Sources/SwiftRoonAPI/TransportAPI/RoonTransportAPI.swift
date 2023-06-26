@@ -264,7 +264,7 @@ extension RoonTransportAPI {
                 case .unsubscribed:
                     self.zones = [:]
                 default:
-                    logger.log("Unrecognized name \(message.verb)")
+                    self.logger.log("Unrecognized name \(message.verb)")
                     assertionFailure("Unrecognized name \(message.verb)")
                 }
 
