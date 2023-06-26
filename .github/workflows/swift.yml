@@ -24,6 +24,6 @@ jobs:
         repo-mappings: |
           github.com/Slorq/SwiftLogger
     - name: Build
-      run: swift build --arch arm64
+      run: swift build
     - name: Run tests
-      run: swift test --arch arm64
+      run: swift test
