@@ -34,7 +34,7 @@ class Transport: NSObject {
 
     init(host: String, port: UInt16) throws {
         guard let url = URL(string: "ws://\(host):\(port)/api") else {
-            fatalError()
+            throw TransportError.invalidURL
         }
 
         self.host = host
