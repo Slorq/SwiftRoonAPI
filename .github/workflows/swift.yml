@@ -23,9 +23,6 @@ jobs:
           ${{ secrets.LOGGER }}
         repo-mappings: |
           github.com/Slorq/SwiftLogger
-          
-    - name: Show eligible build destinations
-      run: xcodebuild -showdestinations -scheme SwiftRoonAPI
       
     - name: Build
       run: swift build
