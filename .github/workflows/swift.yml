@@ -10,7 +10,7 @@ on:
     branches: [ "main" ]
 
 jobs:
-  Run tests: 
+  tests: 
     runs-on: macos-13
     steps:
     - uses: actions/checkout@v3
