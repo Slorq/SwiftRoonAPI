@@ -8,6 +8,15 @@
         "revision" : "dbdc00669c1ced63b27c3c5f052ee4d28f10150c",
         "version" : "7.6.5"
       }
+    },
+    {
+      "identity" : "swiftlogger",
+      "kind" : "remoteSourceControl",
+      "location" : "git@github.com:Slorq/SwiftLogger.git",
+      "state" : {
+        "revision" : "7ecce9557af65f02a7db2e38b2141da2ff244a54",
+        "version" : "0.0.4"
+      }
     }
   ],
   "version" : 2

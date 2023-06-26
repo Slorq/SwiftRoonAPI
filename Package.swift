@@ -6,9 +6,7 @@ import PackageDescription
 let package = Package(
     name: "SwiftRoonAPI",
     platforms: [
-        .macOS(.v13),
-        .watchOS(.v9),
-        .iOS(.v16)
+        .macOS(.v13)
     ],
     products: [
         // Products define the executables and libraries a package produces, and make them visible to other packages.
@@ -17,7 +15,7 @@ let package = Package(
             targets: ["SwiftRoonAPI"]),
     ],
     dependencies: [
-        .package(url: "https://github.com/Slorq/SwiftLogger.git", .upToNextMajor(from: "0.0.1")),
+        .package(url: "git@github.com:Slorq/SwiftLogger.git", .upToNextMajor(from: "0.0.1")),
         .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", .upToNextMajor(from: "7.0.0")),
     ],
     targets: [
