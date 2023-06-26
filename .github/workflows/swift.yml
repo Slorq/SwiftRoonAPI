@@ -10,12 +10,14 @@ on:
     branches: [ "main" ]
 
 jobs:
-  build:
-
+  checkout: 
     runs-on: macos-latest
-
     steps:
     - uses: actions/checkout@v3
+
+  build:
+    runs-on: macos-latest
+    steps:
     - uses: shaunco/ssh-agent@git-repo-mapping # this action will configure git to use the right SSH key per each repository. 
       with:
         ssh-private-key: |
@@ -25,6 +27,9 @@ jobs:
       
     - name: Build
       run: swift build
-      
+
+  test:
+    runs-on: macos-latest
+    steps:    
     - name: Run tests
       run: swift test
