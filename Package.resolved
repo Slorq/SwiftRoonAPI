@@ -14,8 +14,8 @@
       "kind" : "remoteSourceControl",
       "location" : "git@github.com:Slorq/SwiftLogger.git",
       "state" : {
-        "revision" : "cb49f98dbcc82df114e50af09c05bf85e0a609a9",
-        "version" : "0.0.3"
+        "revision" : "7ecce9557af65f02a7db2e38b2141da2ff244a54",
+        "version" : "0.0.4"
       }
     }
   ],
