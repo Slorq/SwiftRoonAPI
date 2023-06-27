@@ -8,7 +8,7 @@
 import Foundation
 import SwiftLogger
 
-enum MooDecodeError: Error {
+enum MooDecodeError: Error, Equatable {
     case badFirstLine
     case badFormat(cause: String)
     case badHeaderLine
