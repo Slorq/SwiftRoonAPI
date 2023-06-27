@@ -13,14 +13,16 @@ import SystemConfiguration
 
 class Sood: NSObject {
 
-    private let logger = Logger()
     private static let soodMulticastIP = "239.255.90.90"
     private static let soodPort: UInt16 = 9003
+
+    private let logger = Logger()
+
     private var interfaceSequence = 0
     private var interfaceTimer: AnyCancellable?
     private var multicast: [String: MulticastInterface] = [:]
     private var unicast: UnicastInterface = .init(sendSocket: nil, interfaceSequence: 0)
-    private var onStart: (() -> Void)?
+
     var onMessage: ((SoodMessage) -> Void)?
     var onNetwork: (() -> Void)?
 
@@ -33,7 +35,7 @@ class Sood: NSObject {
 
     func stop() {
         logger.log("Stoping Sood")
-        interfaceTimer = nil
+        interfaceTimer?.cancel()
         multicast.forEach { (key, value) in
             value.sendSocket?.close()
             value.receiveSocket?.close()
@@ -78,7 +80,7 @@ class Sood: NSObject {
         logger.log("Init socket")
         interfaceSequence += 1
         var interfaceChange = false
-        let interfaces = NetworkInterface.getIFAddresses()
+        let interfaces = NetworkInterfacesProvider.interfaces
 
         interfaces.forEach { interface in
             if listenInterface(netInfo: interface) {

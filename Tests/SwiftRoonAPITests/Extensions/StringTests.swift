@@ -75,5 +75,3 @@ final class StringTests: XCTestCase {
         XCTAssertEqual(components[3], 1)
     }
 }
-
-

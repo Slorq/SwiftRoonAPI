@@ -12,58 +12,76 @@ import SystemConfiguration
 
 struct NetworkInterfacesProvider {
 
-    func ipAddresses() -> [String] {
-#if os(watchOS)
-        return ["WatchOS"]
-#elseif os(macOS)
-        let networkInterfaces = SCNetworkInterfaceCopyAll() as Array
-        let scNetworkInterfaces: [SCNetworkInterface] = (networkInterfaces as? [SCNetworkInterface]) ?? []
-        return scNetworkInterfaces.compactMap {
-            guard let bsdName = SCNetworkInterfaceGetBSDName($0) else { return nil }
-            return getIPAddress(for: bsdName as String)
-        }
-#elseif os(iOS)
-        return getiOSAddress(for: .wifi).map({ [$0] }) ?? []
-#else
-        fatalError("Unsupported OS")
-#endif
+    static var interfaces: [NetworkInterface] {
+        #if os(watchOS)
+            return ["WatchOS"]
+        #elseif os(macOS)
+            return getMacOSAddresses()
+        #elseif os(iOS)
+            return getiOSAddress(for: .wifi).map({ [$0] }) ?? []
+        #else
+            fatalError("Unsupported OS")
+        #endif
     }
+}
 
-    private func getIPAddress(for bsdName: String) -> String? {
-        var address: String?
+// MARK: MacOS
 
-        // Get list of all interfaces on the local machine:
-        var ifaddr: UnsafeMutablePointer<ifaddrs>?
-        guard getifaddrs(&ifaddr) == 0 else { return nil }
-        guard let firstAddr = ifaddr else { return nil }
+#if os(macOS)
+extension NetworkInterfacesProvider {
 
-        // For each interface ...
-        for ifptr in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
-            let interface = ifptr.pointee
+    private static func getMacOSAddresses() -> [NetworkInterface] {
+        var addresses = [NetworkInterface]()
+        var ifaddr : UnsafeMutablePointer<ifaddrs>?
+        guard getifaddrs(&ifaddr) == 0 else { return [] }
+        guard let firstAddr = ifaddr else { return [] }
 
-            // Check for IPv4 or IPv6 interface:
-            let addrFamily = interface.ifa_addr.pointee.sa_family
-            if addrFamily == UInt8(AF_INET) || addrFamily == UInt8(AF_INET6) {
+        for ptr in sequence(first: firstAddr, next: { $0.pointee.ifa_next }) {
+            let flags = Int32(ptr.pointee.ifa_flags)
+            let addr = ptr.pointee.ifa_addr.pointee
 
-                // Check interface name:
-                let name = String(cString: interface.ifa_name)
-                if name == bsdName {
+            guard let net = ptr.pointee.ifa_netmask?.pointee else { continue }
 
-                    // Convert interface address to a human readable string:
+            if (flags & (IFF_UP|IFF_RUNNING|IFF_LOOPBACK)) == (IFF_UP|IFF_RUNNING) {
+                if addr.sa_family == UInt8(AF_INET) { //  || addr.sa_family == UInt8(AF_IN) -> for IPv6
+
                     var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                    getnameinfo(interface.ifa_addr, socklen_t(interface.ifa_addr.pointee.sa_len),
-                                &hostname, socklen_t(hostname.count),
-                                nil, socklen_t(0), NI_NUMERICHOST)
-                    address = String(cString: hostname)
+                    var netmaskName = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                    let getHostname = getnameinfo(ptr.pointee.ifa_addr,
+                                                  socklen_t(addr.sa_len),
+                                                  &hostname,
+                                                  socklen_t(hostname.count),
+                                                  nil,
+                                                  socklen_t(0),
+                                                  NI_NUMERICHOST)
+                    getnameinfo(ptr.pointee.ifa_netmask,
+                                socklen_t(net.sa_len),
+                                &netmaskName,
+                                socklen_t(netmaskName.count),
+                                nil,
+                                socklen_t(0),
+                                NI_NUMERICHOST)
+                    if (getHostname == 0) {
+                        let address = String(cString: hostname)
+                        let mask = String(cString: netmaskName)
+                        addresses.append(.init(ip: address, netmask: mask))
+                    }
                 }
             }
         }
-        freeifaddrs(ifaddr)
 
-        return address
+        freeifaddrs(ifaddr)
+        return addresses
     }
 
-    #if os(iOS)
+}
+#endif
+
+// MARK: iOS
+
+#if os(iOS)
+extension NetworkInterfacesProvider {
+
     enum Network: String {
         case wifi = "en0"
         case cellular = "pdp_ip0"
@@ -71,8 +89,8 @@ struct NetworkInterfacesProvider {
         //... case ipv6 = "ipv6"
     }
 
-    func getiOSAddress(for network: Network) -> String? {
-        var address: String?
+    private static func getiOSAddress(for network: Network) -> String? {
+        var address: NetworkInterface?
 
         // Get list of all interfaces on the local machine:
         var ifaddr: UnsafeMutablePointer<ifaddrs>?
@@ -93,10 +111,26 @@ struct NetworkInterfacesProvider {
 
                     // Convert interface address to a human readable string:
                     var hostname = [CChar](repeating: 0, count: Int(NI_MAXHOST))
-                    getnameinfo(interface.ifa_addr, socklen_t(interface.ifa_addr.pointee.sa_len),
-                                &hostname, socklen_t(hostname.count),
-                                nil, socklen_t(0), NI_NUMERICHOST)
-                    address = String(cString: hostname)
+                    var netmaskName = [CChar](repeating: 0, count: Int(NI_MAXHOST))
+                    let getHostname = getnameinfo(interface.ifa_addr,
+                                socklen_t(interface.ifa_addr.pointee.sa_len),
+                                &hostname,
+                                socklen_t(hostname.count),
+                                nil,
+                                socklen_t(0), NI_NUMERICHOST)
+                    getnameinfo(ptr.pointee.ifa_netmask,
+                                socklen_t(net.sa_len),
+                                &netmaskName,
+                                socklen_t(netmaskName.count),
+                                nil,
+                                socklen_t(0),
+                                NI_NUMERICHOST)
+
+                    if (getHostname == 0) {
+                        let address = String(cString: hostname)
+                        let mask = String(cString: netmaskName)
+                        address = .init(ip: address, netmask: mask)
+                    }
                 }
             }
         }
@@ -104,5 +138,6 @@ struct NetworkInterfacesProvider {
 
         return address
     }
-    #endif
+
 }
+#endif

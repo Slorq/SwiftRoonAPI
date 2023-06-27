@@ -26,4 +26,14 @@ jobs:
       run: swift build
 
     - name: Run tests
-      run: swift test
+      run: |
+        swift test --enable-code-coverage
+        xcrun llvm-cov export -format="lcov" .build/debug/SwiftRoonAPIPackageTests.xctest/Contents/MacOS/SwiftRoonAPIPackageTests -instr-profile .build/debug/codecov/default.profdata -ignore-filename-regex=".build|Tests" > info.lcov
+
+    - name: Upload coverage reports to Codecov
+      uses: codecov/codecov-action@v3
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
+        files: info.lcov
+        fail_ci_if_error: true
+        verbose: true
