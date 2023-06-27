@@ -10,18 +10,18 @@ import XCTest
 
 final class MooEncoderTests: XCTestCase {
 
-    let encoder = MooEncoder()
+    private let encoder = MooEncoder()
 
     func testEncodingSuccessfully() {
         // Given
         let messages: [MooMessage] = [
-            MooMessage(requestID: 1, verb: SwiftRoonAPI.MooVerb.complete, name: "Success"),
-            MooMessage(requestID: 0, verb: SwiftRoonAPI.MooVerb.request, name: "com.roonlabs.registry:1/info"),
-            MooMessage(requestID: 1, verb: SwiftRoonAPI.MooVerb.request, name: "com.roonlabs.registry:1/register", headers: [SwiftRoonAPI.MooHeaderName.contentType: "application/json"], body: "{\"provided_services\":[\"com.roonlabs.ping:1\"],\"required_services\":[\"com.roonlabs.transport:2\"],\"website\":\"https:\\/\\/github.com\\/Slorq\\/roon-mini-player\",\"optional_services\":[],\"email\":\"test@mail.com\",\"publisher\":\"Slorq\",\"display_name\":\"Mini Display MacOS\",\"token\":\"78853ef6-e1f7-4d84-902d-88e0cdd60b05\",\"extension_id\":\"com.coffeeware.minidisplay\",\"display_version\":\"0.0.1\"}".data(using: .utf8)),
-            MooMessage(requestID: 2, verb: SwiftRoonAPI.MooVerb.request, name: "com.roonlabs.transport:2/subscribe_zones", body: "{\"subscription_key\":1}".data(using: .utf8)),
-            MooMessage(requestID: 4, verb: SwiftRoonAPI.MooVerb.request, name: "com.roonlabs.transport:2/control", body: "{\"zone_or_output_id\": \"16010d60b4bebac50430d2381c9578c87196\", \"control\": \"playpause\"}".data(using: .utf8)),
-            MooMessage(requestID: 6, verb: SwiftRoonAPI.MooVerb.request, name: "com.roonlabs.transport:2/control", body: "{\"zone_or_output_id\": \"16010d60b4bebac50430d2381c9578c87196\", \"control\": \"next\"}".data(using: .utf8)),
-            MooMessage(requestID: 8, verb: SwiftRoonAPI.MooVerb.request, name: "com.roonlabs.transport:2/control", body: "{\"zone_or_output_id\": \"16010d60b4bebac50430d2381c9578c87196\", \"control\": \"previous\"}".data(using: .utf8)),
+            MooMessage(requestID: 1, verb: SwiftRoonAPI.MooVerb.complete, name: .success),
+            MooMessage(requestID: 0, verb: SwiftRoonAPI.MooVerb.request, name: .info),
+            MooMessage(requestID: 1, verb: SwiftRoonAPI.MooVerb.request, name: .register, headers: [SwiftRoonAPI.MooHeaderName.contentType: "application/json"], body: try! RoonExtensionRegInfo.makeEncoded()),
+            MooMessage(requestID: 2, verb: SwiftRoonAPI.MooVerb.request, name: .transport + "/subscribe_" + .zones, body: try! SubscriptionBody.makeEncoded()),
+            MooMessage(requestID: 4, verb: SwiftRoonAPI.MooVerb.request, name: .control, body: try! ZoneControl.makeEncoded(.playpause)),
+            MooMessage(requestID: 6, verb: SwiftRoonAPI.MooVerb.request, name: .control, body: try! ZoneControl.makeEncoded(.next)),
+            MooMessage(requestID: 8, verb: SwiftRoonAPI.MooVerb.request, name: .control, body: try! ZoneControl.makeEncoded(.previous)),
         ]
 
         messages.forEach { message in
@@ -31,6 +31,41 @@ final class MooEncoderTests: XCTestCase {
             // Then
             XCTAssertNotNil(encodedMessage)
         }
+    }
+
+}
+
+private extension ZoneControl {
+
+    static func make(_ control: RoonControl) throws -> ZoneControl {
+        .init(zoneOrOutputID: "16010d60b4bebac50430d2381c9578c87196",
+              control: control)
+    }
+
+    static func makeEncoded(_ control: RoonControl) throws -> Data {
+        try self.make(control).jsonEncoded()
+    }
+
+}
+
+private extension SubscriptionBody {
+
+    static func makeEncoded() throws -> Data {
+        try SubscriptionBody(subscriptionKey: "1").jsonEncoded()
+    }
+
+}
+
+private extension RoonExtensionRegInfo {
+
+    static func makeEncoded() throws -> Data {
+        try RoonExtensionRegInfo(displayName: "Display Name",
+                                 displayVersion: "0.0.1",
+                                 email: "test@mail.com",
+                                 extensionID: "com.coffeeware.roonminiplayer",
+                                 publisher: "Slorq",
+                                 website: "https://github.com/Slorq/roon-mini-player")
+        .jsonEncoded()
     }
 
 }
