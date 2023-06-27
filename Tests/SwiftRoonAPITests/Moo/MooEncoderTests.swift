@@ -25,10 +25,10 @@ final class MooEncoderTests: XCTestCase {
         ]
 
         messages.forEach { message in
-        // When
+            // When
             let encodedMessage = encoder.encode(message: message)
 
-        // Then
+            // Then
             XCTAssertNotNil(encodedMessage)
         }
     }
