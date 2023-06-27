@@ -24,9 +24,11 @@ public class RoonTransportAPI: ServiceRegistry {
 
 }
 
-public enum SeekHow: String {
+public enum SeekHow: String, Codable {
+
     case absolute
     case relative
+
 }
 
 extension RoonTransportAPI {
@@ -130,9 +132,9 @@ extension RoonTransportAPI {
          * @param {number} seconds - The target seek position
          * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
          */
-        public func seek(identifiable: RoonIdentifiable, how: SeekHow, seconds: Double, completion: @escaping (MooMessage?) -> Void) {
-            let body = "{\"zone_or_output_id\": \"\(identifiable.id)\", \"how\": \"\(how.rawValue)\", \"seconds\": \(seconds)}"
-                .data(using: .utf8)!
+        public func seek(identifiable: RoonIdentifiable, how: SeekHow, seconds: Double, completion: @escaping (MooMessage?) -> Void) throws {
+            let zoneSeek = ZoneSeek(zoneOrOutputID: identifiable.id, how: how, seconds: seconds)
+            let body = try zoneSeek.jsonEncoded()
             core.moo.sendRequest(name: .transport + "/seek", body: body, completion: completion)
         }
 
@@ -154,10 +156,10 @@ extension RoonTransportAPI {
          * "next" - Advance to the next track
          *
          */
-        public func control(identifiable: RoonIdentifiable, control: RoonControl, completion: ((MooMessage?) -> Void)?) {
-            let body = "{\"zone_or_output_id\": \"\(identifiable.id)\", \"control\": \"\(control.rawValue)\"}"
-                .data(using: .utf8)!
-            core.moo.sendRequest(name: .transport + "/control", body: body, completion: completion)
+        public func control(identifiable: RoonIdentifiable, control: RoonControl, completion: ((MooMessage?) -> Void)?) throws {
+            let zoneControl = ZoneControl(zoneOrOutputID: identifiable.id, control: control)
+            let body = try zoneControl.jsonEncoded()
+            core.moo.sendRequest(name: .control, body: body, completion: completion)
         }
 
         /**

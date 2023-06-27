@@ -8,6 +8,8 @@
 import Foundation
 
 typealias TransportRequest = String
+
 extension TransportRequest {
     static var zones: TransportRequest { "zones" }
+    static var control: TransportRequest { .transport + "/control" }
 }

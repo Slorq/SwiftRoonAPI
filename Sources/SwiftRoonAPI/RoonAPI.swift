@@ -305,7 +305,7 @@ public class RoonAPI: NSObject {
                     self.extensionRegInfo.token = token
                 }
 
-                let body = try! JSONEncoder().encode(self.extensionRegInfo)
+                let body = try? self.extensionRegInfo.jsonEncoded()
                 moo.sendRequest(name: .register, body: body, contentType: .applicationJson) { [weak self] message in
                     guard let self else { return }
                     self.logger.log(".** RoonAPI registered successfully \(String(describing: message))")

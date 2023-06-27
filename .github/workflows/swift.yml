@@ -21,9 +21,6 @@ jobs:
           ${{ secrets.LOGGER }}
         repo-mappings: |
           github.com/Slorq/SwiftLogger
-      
-    - name: Build
-      run: swift build
 
     - name: Run tests
       run: |

@@ -8,7 +8,9 @@
 import Foundation
 
 struct ZoneSeekChanged: Codable {
+
     let zoneId: String
     let queueTimeRemaining: Double
     let seekPosition: Double?
+    
 }
