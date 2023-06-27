@@ -48,7 +48,7 @@ public struct MooMessage {
          verb: MooVerb,
          name: MooName,
          service: String? = nil,
-         headers: [MooHeaderName: String],
+         headers: [MooHeaderName: String] = [:],
          body: Data? = nil) {
         self.requestID = requestID
         self.verb = verb
