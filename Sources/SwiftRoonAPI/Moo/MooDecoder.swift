@@ -9,6 +9,7 @@ import Foundation
 import SwiftLogger
 
 enum MooDecodeError: Error, Equatable {
+    case emptyData
     case badFirstLine
     case badFormat(cause: String)
     case badHeaderLine
@@ -24,10 +25,10 @@ class MooDecoder {
 
     private let logger = Logger()
 
-    func decode(_ data: Data) throws -> MooMessage? {
+    func decode(_ data: Data) throws -> MooMessage {
         guard !data.isEmpty else {
             logger.log("MOO: empty message received")
-            return nil
+            throw MooDecodeError.emptyData
         }
 
         guard let dataString = String(data: data, encoding: .utf8) else {
@@ -37,7 +38,7 @@ class MooDecoder {
         return try decode(dataString)
     }
 
-    func decode(_ string: String) throws -> MooMessage? {
+    func decode(_ string: String) throws -> MooMessage {
         logger.log("MooDecoder - decode - \(string)")
         let lines = string.components(separatedBy: "\n")
 
@@ -91,7 +92,7 @@ class MooDecoder {
         // Body
         // TODO: Update to read from buffer instead of transforming data from/to string
         var body: Data?
-        if lines.count > endOfHeaders + 1 {
+        if lines.count > endOfHeaders + 1, !lines[endOfHeaders + 1].isEmpty {
             body = lines[endOfHeaders + 1].data(using: .utf8)
         }
         

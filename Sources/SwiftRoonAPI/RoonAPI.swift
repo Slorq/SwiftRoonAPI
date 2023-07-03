@@ -340,7 +340,7 @@ public class RoonAPI: NSObject {
                 let stringBody = body.flatMap { String(data: $0, encoding: .utf8) } ?? ""
                 self.logger.log("API 2 <- \(message.verb) \(message.requestID) \(message.name) \(stringBody)")
                 if !moo.handleMessage(message: message) {
-                    moo.closeTransport()
+                    moo.close()
                 }
             } 
         }

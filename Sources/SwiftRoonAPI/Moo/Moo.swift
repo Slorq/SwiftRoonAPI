@@ -101,13 +101,21 @@ class Moo: NSObject {
         }
     }
 
-    func closeTransport() {
+    func close() {
         transport.close()
     }
 
     private func send(message: MooMessage, completion: ((MooMessage?) -> Void)?) {
         logger.log("Moo -> sendMessage -> \(message.verb.rawValue) \(message.requestID) \(message.name)")
-        if let data = mooEncoder.encode(message: message) {
+
+        var mutableMessage = message
+        mutableMessage.headers[.requestID] = "\(message.requestID)"
+        if let body = message.body {
+            mutableMessage.headers[.contentType] = message.headers[.contentType] ?? .applicationJson
+            mutableMessage.headers[.contentLength] = "\(body.count)"
+        }
+
+        if let data = mooEncoder.encode(message: mutableMessage) {
             transport.send(data: data)
             requestHandlers[requestID] = completion
             requestID += 1
@@ -135,19 +143,19 @@ extension Moo: MooTransportDelegate {
 
     func transport(_ transport: MooTransport, didReceiveData data: Data) {
         do {
-            guard let message = try mooDecoder.decode(data) else { return }
+            let message = try mooDecoder.decode(data)
             onMessage?(self, message)
         } catch {
-            assertionFailure("Need to handle error \(error)")
+            onError?(self, error)
         }
     }
 
     func transport(_ transport: MooTransport, didReceiveString string: String) {
         do {
-            guard let message = try mooDecoder.decode(string) else { return }
+            let message = try mooDecoder.decode(string)
             onMessage?(self, message)
         } catch {
-            assertionFailure("Need to handle error \(error)")
+            onError?(self, error)
         }
     }
 
@@ -160,3 +168,24 @@ protocol _MooTransport: AutoMockable {
     func resume()
     func send(data: Data)
 }
+
+#if DEBUG
+extension Moo {
+
+    var hooks: TestHooks {
+        TestHooks(self)
+    }
+
+    struct TestHooks {
+
+        private let moo: Moo
+
+        init(_ moo: Moo) {
+            self.moo = moo
+        }
+
+        var requestHandlers: [Int: (MooMessage?) -> Void] { moo.requestHandlers }
+        var requestID: Int { moo.requestID }
+    }
+}
+#endif
