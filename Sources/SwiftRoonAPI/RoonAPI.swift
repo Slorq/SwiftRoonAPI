@@ -288,7 +288,7 @@ public class RoonAPI: NSObject {
                            onClose: @escaping () -> Void,
                            onError: @escaping (Error) -> Void) -> Moo {
         logger.log("Sood WS Connect \(hostIP):\(httpPort)")
-        let transport = try! Transport(host: hostIP, port: httpPort)
+        let transport = try! MooTransport(host: hostIP, port: httpPort)
         let moo = Moo(transport: transport)
 
         moo.onOpen = { [weak self] moo in

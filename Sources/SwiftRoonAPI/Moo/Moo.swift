@@ -12,7 +12,7 @@ class Moo: NSObject {
 
     private static var counter = 0
 
-    private let transport: Transport
+    private let transport: MooTransport
     private var requestID = 0
     private var subKey = 0
     private let logger = Logger()
@@ -30,7 +30,7 @@ class Moo: NSObject {
         }
     }
 
-    init(transport: Transport) {
+    init(transport: MooTransport) {
         Self.counter += 1
         self.mooID = Self.counter
         self.transport = transport
@@ -116,24 +116,24 @@ class Moo: NSObject {
 
 }
 
-extension Moo: TransportDelegate {
+extension Moo: MooTransportDelegate {
 
-    func transportDidOpen(_ transport: Transport) {
+    func transportDidOpen(_ transport: MooTransport) {
         logger.log("Moo - didOpen")
         onOpen?(self)
     }
 
-    func transportDidClose(_ transport: Transport) {
+    func transportDidClose(_ transport: MooTransport) {
         logger.log("Moo - didClose")
         onClose?(self)
     }
 
-    func transport(_ transport: Transport, didReceiveError error: Error) {
+    func transport(_ transport: MooTransport, didReceiveError error: Error) {
         logger.log("Moo - error - \(error)")
         onError?(self, error)
     }
 
-    func transport(_ transport: Transport, didReceiveData data: Data) {
+    func transport(_ transport: MooTransport, didReceiveData data: Data) {
         do {
             guard let message = try mooDecoder.decode(data) else { return }
             onMessage?(self, message)
@@ -142,7 +142,7 @@ extension Moo: TransportDelegate {
         }
     }
 
-    func transport(_ transport: Transport, didReceiveString string: String) {
+    func transport(_ transport: MooTransport, didReceiveString string: String) {
         do {
             guard let message = try mooDecoder.decode(string) else { return }
             onMessage?(self, message)
