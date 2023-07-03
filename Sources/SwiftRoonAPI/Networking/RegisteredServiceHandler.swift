@@ -9,28 +9,15 @@ import Foundation
 
 struct RegisteredServiceHandler {
 
-    func sendContinueAll(subtypes: RegisteredServiceSubtype, moo: Moo, subtype: String, name: String, body: Data?) {
-        guard let subtype = subtypes[subtype] else {
-            assertionFailure("Couldn't find subtype \(subtype)")
+    static func sendContinueAll(subservices: RegisteredSubservices, moo: Moo, subservice: String, name: String, body: Data?) {
+        guard let subservice = subservices[subservice] else {
+            assertionFailure("Couldn't find subtype \(subservice)")
             return
         }
 
-        subtype.forEach { _, value in
-            value.forEach({ key, value2 in
-                value2.sendContinue(moo, name, body, value2.message)
-            })
-        }
-    }
-
-    func sendCompleteAll(subtypes: RegisteredServiceSubtype, moo: Moo, subtype: String, name: String, body: Data?) {
-        guard let subtype = subtypes[subtype] else {
-            assertionFailure("Couldn't find subtype \(subtype)")
-            return
-        }
-
-        subtype.forEach { _, value in
-            value.forEach({ key, value2 in
-                value2.sendComplete(moo, name, body, value2.message)
+        subservice.forEach { _, subscriptionHandlers in
+            subscriptionHandlers.forEach({ _, subscriptionHandler in
+                subscriptionHandler.sendContinue(moo, name, body, subscriptionHandler.message)
             })
         }
     }

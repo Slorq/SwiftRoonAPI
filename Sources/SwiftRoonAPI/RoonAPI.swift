@@ -24,7 +24,6 @@ public class RoonAPI: NSObject {
     public typealias RoonErrorCompletionHandler = (Error) -> Void
 
     private let logger = Logger()
-    private let registeredServiceHandler = RegisteredServiceHandler()
     private var extensionRegInfo: RoonExtensionRegInfo
     private var isPaired = false
     private var moo: Moo!
@@ -135,7 +134,11 @@ public class RoonAPI: NSObject {
                     let pairedCore = PairedCore(coreID: core.coreID)
                     let body = try? pairedCore.jsonEncoded()
                     body.map {
-                        self.registeredServiceHandler.sendContinueAll(subtypes: service.subtypes, moo: core.moo, subtype: "subscribe_pairing", name: "Changed", body: $0)
+                        RegisteredServiceHandler.sendContinueAll(subservices: service.subservices,
+                                                                 moo: core.moo,
+                                                                 subservice: "subscribe_pairing",
+                                                                 name: "Changed",
+                                                                 body: $0)
                     }
                 }
                 if core.coreID == self.pairedCore?.coreID {
@@ -178,7 +181,7 @@ public class RoonAPI: NSObject {
 
         specs.subscriptions.forEach { s in
             let subname = s.subscribeName
-            registeredService.subtypes[subname] = [:]
+            registeredService.subservices[subname] = [:]
             specs.methods[subname] = { moo, request in
                 guard let body = request.body,
                       let subscriptionBody = try? JSONDecoder().decode(SubscriptionBody.self, from: body) else {
@@ -190,13 +193,13 @@ public class RoonAPI: NSObject {
                 let originalSendComplete = subscriptionMessageHandler.sendComplete
                 subscriptionMessageHandler.sendComplete = { moo, name, body, message in
                     originalSendComplete(moo, name, body, message)
-                    registeredService.subtypes[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = nil
+                    registeredService.subservices[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = nil
                 }
                 s.start(moo, request)
-                if registeredService.subtypes[subname]?[moo.mooID] == nil {
-                    registeredService.subtypes[subname]?[moo.mooID] = [:]
+                if registeredService.subservices[subname]?[moo.mooID] == nil {
+                    registeredService.subservices[subname]?[moo.mooID] = [:]
                 }
-                registeredService.subtypes[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = subscriptionMessageHandler
+                registeredService.subservices[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = subscriptionMessageHandler
             }
 
             specs.methods[s.unsubscribeName] = { moo, request in
@@ -206,7 +209,7 @@ public class RoonAPI: NSObject {
                     return
                 }
 
-                registeredService.subtypes[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = nil
+                registeredService.subservices[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = nil
                 s.end?()
                 moo.sendComplete(.unsubscribed, message: request)
             }
@@ -224,7 +227,7 @@ public class RoonAPI: NSObject {
             } else {
                 specs.subscriptions.forEach { s in
                     let subname = s.subscribeName
-                    registeredService.subtypes[subname]?[moo.mooID] = nil
+                    registeredService.subservices[subname]?[moo.mooID] = nil
                     s.end?()
                 }
             }

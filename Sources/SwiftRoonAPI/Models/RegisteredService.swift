@@ -7,15 +7,15 @@
 
 import Foundation
 
-typealias RegisteredServiceSubtype = [String: [Int: [String: SubscriptionMessageHandler]]]
+typealias RegisteredSubservices = [String: [Int: [String: SubscriptionMessageHandler]]]
 
 public class RegisteredService {
 
     var name: String?
-    var subtypes: RegisteredServiceSubtype
+    var subservices: RegisteredSubservices
 
-    init(name: String? = nil, subtypes: RegisteredServiceSubtype = [:]) {
+    init(name: String? = nil, subservices: RegisteredSubservices = [:]) {
         self.name = name
-        self.subtypes = subtypes
+        self.subservices = subservices
     }
 }
