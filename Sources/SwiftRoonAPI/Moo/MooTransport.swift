@@ -22,19 +22,7 @@ protocol MooTransportDelegate: AnyObject, AutoMockable {
     func transport(_ transport: MooTransport, didReceiveString string: String)
 }
 
-protocol _URLSessionWebSocketTask: AutoMockable {
-    var delegate: URLSessionTaskDelegate? { get set }
-
-    func cancel(with closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?)
-    func receive(completionHandler: @escaping (Result<URLSessionWebSocketTask.Message, Error>) -> Void)
-    func resume()
-    func send(_ message: URLSessionWebSocketTask.Message, completionHandler: @escaping ((Error)?) -> Void)
-    func sendPing(pongReceiveHandler: @escaping @Sendable (Error?) -> Void)
-}
-
-extension URLSessionWebSocketTask: _URLSessionWebSocketTask {}
-
-class MooTransport: NSObject {
+class MooTransport: NSObject, _MooTransport {
 
     private let host: String
     private let port: UInt16
@@ -80,11 +68,11 @@ class MooTransport: NSObject {
         }
     }
 
-    func close(closeCode: URLSessionWebSocketTask.CloseCode = .goingAway) {
+    func close() {
         self.logger.log("Transport - close")
         self.isAlive = false
         self.timerSubscription?.cancel()
-        self.webSocket.cancel(with: closeCode, reason: nil)
+        self.webSocket.cancel(with: .goingAway, reason: nil)
         self.delegate?.transportDidClose(self)
     }
 
@@ -175,3 +163,15 @@ extension Timer.TimerPublisher: TimerProtocol {
         self.autoconnect().eraseToAnyPublisher()
     }
 }
+
+protocol _URLSessionWebSocketTask: AutoMockable {
+    var delegate: URLSessionTaskDelegate? { get set }
+
+    func cancel(with closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?)
+    func receive(completionHandler: @escaping (Result<URLSessionWebSocketTask.Message, Error>) -> Void)
+    func resume()
+    func send(_ message: URLSessionWebSocketTask.Message, completionHandler: @escaping ((Error)?) -> Void)
+    func sendPing(pongReceiveHandler: @escaping @Sendable (Error?) -> Void)
+}
+
+extension URLSessionWebSocketTask: _URLSessionWebSocketTask {}

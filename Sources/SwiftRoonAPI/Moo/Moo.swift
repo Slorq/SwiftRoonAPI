@@ -12,7 +12,7 @@ class Moo: NSObject {
 
     private static var counter = 0
 
-    private let transport: MooTransport
+    private var transport: _MooTransport
     private var requestID = 0
     private var subKey = 0
     private let logger = Logger()
@@ -30,7 +30,7 @@ class Moo: NSObject {
         }
     }
 
-    init(transport: MooTransport) {
+    init(transport: _MooTransport) {
         Self.counter += 1
         self.mooID = Self.counter
         self.transport = transport
@@ -39,7 +39,7 @@ class Moo: NSObject {
 
         super.init()
 
-        transport.delegate = self
+        self.transport.delegate = self
     }
 
     func connectWebSocket() {
@@ -151,4 +151,12 @@ extension Moo: MooTransportDelegate {
         }
     }
 
+}
+
+protocol _MooTransport: AutoMockable {
+    var delegate: MooTransportDelegate? { get set }
+
+    func close()
+    func resume()
+    func send(data: Data)
 }

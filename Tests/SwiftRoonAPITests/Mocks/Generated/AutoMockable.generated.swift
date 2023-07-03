@@ -125,6 +125,56 @@ class MooTransportDelegateMock: MooTransportDelegate {
     }
 
 }
+class _MooTransportMock: _MooTransport {
+
+
+    var delegate: MooTransportDelegate?
+
+
+    //MARK: - close
+
+    var closeCallsCount = 0
+    var closeCalled: Bool {
+        return closeCallsCount > 0
+    }
+    var closeClosure: (() -> Void)?
+
+    func close() {
+        closeCallsCount += 1
+        closeClosure?()
+    }
+
+    //MARK: - resume
+
+    var resumeCallsCount = 0
+    var resumeCalled: Bool {
+        return resumeCallsCount > 0
+    }
+    var resumeClosure: (() -> Void)?
+
+    func resume() {
+        resumeCallsCount += 1
+        resumeClosure?()
+    }
+
+    //MARK: - send
+
+    var sendDataCallsCount = 0
+    var sendDataCalled: Bool {
+        return sendDataCallsCount > 0
+    }
+    var sendDataReceivedData: Data?
+    var sendDataReceivedInvocations: [Data] = []
+    var sendDataClosure: ((Data) -> Void)?
+
+    func send(data: Data) {
+        sendDataCallsCount += 1
+        sendDataReceivedData = data
+        sendDataReceivedInvocations.append(data)
+        sendDataClosure?(data)
+    }
+
+}
 class _URLSessionWebSocketTaskMock: _URLSessionWebSocketTask {
 
 
