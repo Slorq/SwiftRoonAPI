@@ -16,11 +16,14 @@ final class MooDecoderTests: XCTestCase {
         // Given
         let data = Data()
 
-        // When
-        let decodedMessage = try decoder.decode(data)
-
-        // Then
-        XCTAssertNil(decodedMessage)
+        do {
+            // When
+            _ = try decoder.decode(data)
+            XCTFail("Should throw an error")
+        } catch {
+            // Then
+            XCTAssertEqual(error as? MooDecodeError, MooDecodeError.emptyData)
+        }
     }
 
     func testDecodeInvalidData() {

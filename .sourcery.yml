@@ -1,0 +1,6 @@
+sources:
+  - ./Sources
+templates:
+  - ./Sourcery/Templates/AutoMockable.stencil
+output:
+  ./Tests/SwiftRoonAPITests/Mocks/Generated

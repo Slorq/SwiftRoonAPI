@@ -1,5 +1,5 @@
 //
-//  Transport.swift
+//  MooTransport.swift
 //  RoonMiniPlayer
 //
 //  Created by Alejandro Maya on 5/12/22.
@@ -9,41 +9,47 @@ import Combine
 import Foundation
 import SwiftLogger
 
-enum TransportError: Error {
+enum MooTransportError: Error {
     case invalidURL
     case unknownSocketResponse
 }
 
-protocol TransportDelegate: AnyObject {
-    func transportDidOpen(_ transport: Transport)
-    func transportDidClose(_ transport: Transport)
-    func transport(_ transport: Transport, didReceiveError error: Error)
-    func transport(_ transport: Transport, didReceiveData data: Data)
-    func transport(_ transport: Transport, didReceiveString string: String)
+protocol MooTransportDelegate: AnyObject, AutoMockable {
+    func transportDidOpen(_ transport: MooTransport)
+    func transportDidClose(_ transport: MooTransport)
+    func transport(_ transport: MooTransport, didReceiveError error: Error)
+    func transport(_ transport: MooTransport, didReceiveData data: Data)
+    func transport(_ transport: MooTransport, didReceiveString string: String)
 }
 
-class Transport: NSObject {
+class MooTransport: NSObject, _MooTransport {
 
     private let host: String
     private let port: UInt16
     private let logger = Logger()
-    private let webSocket: URLSessionWebSocketTask
-    private var isAlive = false
-    private var timer: Cancellable?
-    weak var delegate: TransportDelegate?
+    private var webSocket: _URLSessionWebSocketTask
+    private(set) var isAlive = false
+    private let timerPublisher: TimerProtocol
+    private var timerSubscription: Cancellable?
+    weak var delegate: MooTransportDelegate?
 
-    init(host: String, port: UInt16) throws {
+    private static var defaultTimePublisher: TimerProtocol {
+        Timer.publish(every: 10, on: .current, in: .common)
+    }
+
+    init(host: String, port: UInt16, webSocket: _URLSessionWebSocketTask? = nil, timerPublisher: TimerProtocol = MooTransport.defaultTimePublisher) throws {
         guard let url = URL(string: "ws://\(host):\(port)/api") else {
-            throw TransportError.invalidURL
+            throw MooTransportError.invalidURL
         }
 
         self.host = host
         self.port = port
-        self.webSocket = URLSession.shared.webSocketTask(with: url)
+        self.webSocket = webSocket ?? URLSession.shared.webSocketTask(with: url)
+        self.timerPublisher = timerPublisher
 
         super.init()
 
-        webSocket.delegate = self
+        self.webSocket.delegate = self
     }
 
     func resume() {
@@ -56,17 +62,17 @@ class Transport: NSObject {
             guard let self else { return }
             if let error {
                 self.delegate?.transport(self, didReceiveError: error)
-            } else {
-                self.receive()
             }
+
+            self.scheduleReceive()
         }
     }
 
-    func close(closeCode: URLSessionWebSocketTask.CloseCode = .goingAway) {
+    func close() {
         self.logger.log("Transport - close")
         self.isAlive = false
-        self.timer = nil
-        self.webSocket.cancel(with: closeCode, reason: nil)
+        self.timerSubscription?.cancel()
+        self.webSocket.cancel(with: .goingAway, reason: nil)
         self.delegate?.transportDidClose(self)
     }
 
@@ -82,8 +88,6 @@ class Transport: NSObject {
                 case .string(let string):
                     self.logger.log("Transport - Web socket did receive string \(string)")
                     self.delegate?.transport(self, didReceiveString: string)
-                @unknown default:
-                    self.delegate?.transport(self, didReceiveError: TransportError.unknownSocketResponse)
                 }
                 self.scheduleReceive()
             case .failure(let error):
@@ -109,20 +113,19 @@ class Transport: NSObject {
     }
 }
 
-extension Transport: URLSessionWebSocketDelegate {
+extension MooTransport: URLSessionWebSocketDelegate {
     
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didOpenWithProtocol protocol: String?) {
-        logger.log("Transport - didOpen")
+        logger.log("MooTransport - didOpen")
         isAlive = true
 
-        self.timer = Timer.publish(every: 10, on: .current, in: .common)
-            .autoconnect()
+        self.timerSubscription = timerPublisher.getTimerPublisher()
             .sink(receiveValue: { [weak self] _ in
                 guard let self else { return }
 
                 guard self.isAlive else {
                     self.logger.log("Roon API Connection to \(self.host):\(self.port) closed due to missed heartbeat")
-                    self.timer?.cancel()
+                    self.timerSubscription?.cancel()
                     return
                 }
 
@@ -138,13 +141,37 @@ extension Transport: URLSessionWebSocketDelegate {
     }
 
     func urlSession(_ session: URLSession, webSocketTask: URLSessionWebSocketTask, didCloseWith closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?) {
-        logger.log("Transport - didClose")
+        logger.log("MooTransport - didClose")
         isAlive = false
         delegate?.transportDidClose(self)
     }
 
     func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
-        logger.log("Transport - didCompleteWithError")
+        logger.log("MooTransport - didCompleteWithError")
         isAlive = false
+        error.map { delegate?.transport(self, didReceiveError: $0) }
     }
 }
+
+protocol TimerProtocol {
+    func getTimerPublisher() -> AnyPublisher<Date, Never>
+}
+
+extension Timer.TimerPublisher: TimerProtocol {
+
+    func getTimerPublisher() -> AnyPublisher<Date, Never> {
+        self.autoconnect().eraseToAnyPublisher()
+    }
+}
+
+protocol _URLSessionWebSocketTask: AutoMockable {
+    var delegate: URLSessionTaskDelegate? { get set }
+
+    func cancel(with closeCode: URLSessionWebSocketTask.CloseCode, reason: Data?)
+    func receive(completionHandler: @escaping (Result<URLSessionWebSocketTask.Message, Error>) -> Void)
+    func resume()
+    func send(_ message: URLSessionWebSocketTask.Message, completionHandler: @escaping ((Error)?) -> Void)
+    func sendPing(pongReceiveHandler: @escaping @Sendable (Error?) -> Void)
+}
+
+extension URLSessionWebSocketTask: _URLSessionWebSocketTask {}

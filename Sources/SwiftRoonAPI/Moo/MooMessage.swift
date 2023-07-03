@@ -36,7 +36,7 @@ extension String {
     static var applicationJson: String { "application/json" }
 }
 
-public struct MooMessage {
+public struct MooMessage: Equatable {
     public var requestID: Int
     public var verb: MooVerb
     public var name: MooName

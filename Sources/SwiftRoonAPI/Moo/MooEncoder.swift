@@ -19,14 +19,7 @@ class MooEncoder {
         let body = message.body
         let firstLine = "MOO/1 \(message.verb.rawValue) \(name)"
 
-        var headers = message.headers
-        headers[.requestID] = "\(requestID)"
-        if let body {
-            headers[.contentType] = headers[.contentType] ?? .applicationJson
-            headers[.contentLength] = "\(body.count)"
-        }
-
-        let headersString = headers.map { "\($0.key.rawValue): \($0.value)" }
+        let headersString = message.headers.map { "\($0.key.rawValue): \($0.value)" }
             .joined(separator: "\n")
         let message = ("\(firstLine)\n\(headersString)\n\n")
         var data = message.data(using: .utf8)!
