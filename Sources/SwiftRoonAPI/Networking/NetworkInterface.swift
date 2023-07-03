@@ -12,15 +12,6 @@ struct NetworkInterface {
     let ip: String
     let netmask: String
 
-    var cidr: Int {
-        var cidr = 0
-        for number in binaryRepresentation(netmask) {
-            let numberOfOnes = number.components(separatedBy: "1").count - 1
-            cidr += numberOfOnes
-        }
-        return cidr
-    }
-
     // Network Address
     var network: String {
         return bitwise(&, net1: ip, net2: netmask)
@@ -33,19 +24,7 @@ struct NetworkInterface {
         return broadcast
     }
 
-    private func binaryRepresentation(_ s: String) -> [String] {
-        var result: [String] = []
-        for numbers in s.split(separator: ".") {
-            if let intNumber = numbers.toInt() {
-                if let binary = String(intNumber, radix: 2).toInt() {
-                    result.append(NSString(format: "%08d", binary) as String)
-                }
-            }
-        }
-        return result
-    }
-
-    private func bitwise(_ op: (UInt8,UInt8) -> UInt8, net1: String, net2: String) -> String {
+    private func bitwise(_ op: (UInt8, UInt8) -> UInt8, net1: String, net2: String) -> String {
         let net1numbers = net1.intComponents()
         let net2numbers = net2.intComponents()
         var result = ""
