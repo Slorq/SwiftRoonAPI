@@ -1,5 +1,5 @@
 //
-//  SubscriptionHandler.swift
+//  SubscriptionMessageHandler.swift
 //  
 //
 //  Created by Alejandro Maya on 25/06/23.
