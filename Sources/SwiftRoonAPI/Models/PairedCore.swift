@@ -16,11 +16,3 @@ struct PairedCore: Codable {
     }
 
 }
-
-extension Encodable {
-
-    func jsonEncoded() throws -> Data {
-        return try JSONEncoder().encode(self)
-    }
-
-}

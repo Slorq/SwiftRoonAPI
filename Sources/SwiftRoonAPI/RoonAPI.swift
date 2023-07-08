@@ -96,7 +96,7 @@ public class RoonAPI: NSObject {
             let pair: (Moo, MooMessage) -> Void = { [weak self] moo, request in
                 guard let self,
                       let body = request.body,
-                      let core = try? JSONDecoder().decode(RoonCore.self, from: body) else {
+                      let core = try? JSONDecoder.default.decode(RoonCore.self, from: body) else {
                     return
                 }
 
@@ -184,7 +184,7 @@ public class RoonAPI: NSObject {
             registeredService.subservices[subname] = [:]
             specs.methods[subname] = { moo, request in
                 guard let body = request.body,
-                      let subscriptionBody = try? JSONDecoder().decode(SubscriptionBody.self, from: body) else {
+                      let subscriptionBody = try? JSONDecoder.default.decode(SubscriptionBody.self, from: body) else {
                     assertionFailure("Unable to decode subscriptionBody")
                     return
                 }
@@ -204,7 +204,7 @@ public class RoonAPI: NSObject {
 
             specs.methods[s.unsubscribeName] = { moo, request in
                 guard let body = request.body,
-                      let subscriptionBody = try? JSONDecoder().decode(SubscriptionBody.self, from: body) else {
+                      let subscriptionBody = try? JSONDecoder.default.decode(SubscriptionBody.self, from: body) else {
                     assertionFailure("Unable to decode subscriptionBody")
                     return
                 }
@@ -300,7 +300,7 @@ public class RoonAPI: NSObject {
             moo.sendRequest(name: .info) { [weak self] message in
                 guard let self,
                       let data = message?.body,
-                      let core: RoonCore = try? JSONDecoder().decode(RoonCore.self, from: data) else {
+                      let core: RoonCore = try? JSONDecoder.default.decode(RoonCore.self, from: data) else {
                     return
                 }
 
@@ -366,7 +366,7 @@ public class RoonAPI: NSObject {
         } else if let message,
                   message.name == .registered {
             if let body = message.body,
-               let core = try? JSONDecoder().decode(RoonCore.self, from: body) {
+               let core = try? JSONDecoder.default.decode(RoonCore.self, from: body) {
                 moo.core = core
                 var roonState = RoonSettings.roonState ?? .init(tokens: [:])
                 roonState.tokens[core.coreID] = core.token

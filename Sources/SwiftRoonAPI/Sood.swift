@@ -166,8 +166,8 @@ class Sood: NSObject {
         }
 
         do {
-            let jsonProps = try JSONEncoder().encode(propsDict)
-            let props = try JSONDecoder().decode(SoodMessage.Props.self, from: jsonProps)
+            let jsonProps = try JSONEncoder.default.encode(propsDict)
+            let props = try JSONDecoder.default.decode(SoodMessage.Props.self, from: jsonProps)
             return .init(props: props, from: from, type: type)
         } catch {
             assertionFailure("something went wrong \(#function) - \(error)")

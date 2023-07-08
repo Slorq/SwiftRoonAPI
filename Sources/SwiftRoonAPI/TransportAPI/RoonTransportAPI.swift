@@ -38,11 +38,6 @@ extension RoonTransportAPI {
         private let logger = Logger()
         private let core: RoonCore
         private var zones: [String: RoonZone] = [:]
-        private static let decoder: JSONDecoder = {
-            let decoder = JSONDecoder()
-            decoder.keyDecodingStrategy = .convertFromSnakeCase
-            return decoder
-        }()
 
         fileprivate init(core: RoonCore) {
             self.core = core
@@ -210,7 +205,7 @@ extension RoonTransportAPI {
         public func getZones(completion: (([RoonZone]) -> Void)?) {
             core.moo.sendRequest(name: .transport + "/get_zones") { message in
                 guard let body = message?.body,
-                      let response = try? Self.decoder.decode(GetZonesResponse.self, from: body) else {
+                      let response = try? JSONDecoder.fromSnakeCase.decode(GetZonesResponse.self, from: body) else {
                     completion?([])
                     return
                 }
@@ -221,10 +216,8 @@ extension RoonTransportAPI {
 
         public func getOutputs(completion: (([RoonOutput]) -> Void)?) {
             core.moo.sendRequest(name: .transport + "/get_outputs") { message in
-                let decoder = JSONDecoder()
-                decoder.keyDecodingStrategy = .convertFromSnakeCase
                 guard let body = message?.body,
-                    let response = try? decoder.decode(GetOutputsResponse.self, from: body) else {
+                    let response = try? JSONDecoder.fromSnakeCase.decode(GetOutputsResponse.self, from: body) else {
                     completion?([])
                     return
                 }
@@ -239,7 +232,7 @@ extension RoonTransportAPI {
                 guard let self,
                       let message = message,
                       let data = message.body,
-                      let response = try? Self.decoder.decode(SubscribeZonesResponse.self, from: data) else {
+                      let response = try? JSONDecoder.fromSnakeCase.decode(SubscribeZonesResponse.self, from: data) else {
                     completion?([])
                     return
                 }

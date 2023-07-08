@@ -41,11 +41,11 @@ private extension UserDefaults {
             return nil
         }
 
-        return try JSONDecoder().decode(T.self, from: storedData)
+        return try JSONDecoder.default.decode(T.self, from: storedData)
     }
 
     private func setEncodedValue<T: Codable>(_ value: T, forKey key: String) throws {
-        let encodedData = try JSONEncoder().encode(value)
+        let encodedData = try value.jsonEncoded()
         setValue(encodedData, forKey: key)
     }
 }
