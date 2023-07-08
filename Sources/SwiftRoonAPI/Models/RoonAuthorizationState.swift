@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct RoonAuthorizationState: Codable {
+struct RoonAuthorizationState: Codable, Equatable {
 
     var tokens: [String: String]
     

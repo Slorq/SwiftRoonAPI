@@ -23,8 +23,8 @@ struct RoonSettings {
 private extension UserDefaults {
 
     var roonState: RoonAuthorizationState? {
-        get { (try! decodedValue(forKey: #function)) }
-        set { try! setEncodedValue(newValue, forKey: #function) }
+        get { (try? decodedValue(forKey: #function)) }
+        set { try? setEncodedValue(newValue, forKey: #function) }
     }
 
     var pairedCoreID: String? {
