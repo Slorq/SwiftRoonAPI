@@ -125,6 +125,199 @@ class MooTransportDelegateMock: MooTransportDelegate {
     }
 
 }
+class _AsyncSocketMock: _AsyncSocket {
+
+
+
+
+    //MARK: - beginReceiving
+
+    var beginReceivingThrowableError: Error?
+    var beginReceivingCallsCount = 0
+    var beginReceivingCalled: Bool {
+        return beginReceivingCallsCount > 0
+    }
+    var beginReceivingClosure: (() throws -> Void)?
+
+    func beginReceiving() throws {
+        if let error = beginReceivingThrowableError {
+            throw error
+        }
+        beginReceivingCallsCount += 1
+        try beginReceivingClosure?()
+    }
+
+    //MARK: - bind
+
+    var bindToPortThrowableError: Error?
+    var bindToPortCallsCount = 0
+    var bindToPortCalled: Bool {
+        return bindToPortCallsCount > 0
+    }
+    var bindToPortReceivedPort: UInt16?
+    var bindToPortReceivedInvocations: [UInt16] = []
+    var bindToPortClosure: ((UInt16) throws -> Void)?
+
+    func bind(toPort port: UInt16) throws {
+        if let error = bindToPortThrowableError {
+            throw error
+        }
+        bindToPortCallsCount += 1
+        bindToPortReceivedPort = port
+        bindToPortReceivedInvocations.append(port)
+        try bindToPortClosure?(port)
+    }
+
+    //MARK: - bind
+
+    var bindToPortInterfaceThrowableError: Error?
+    var bindToPortInterfaceCallsCount = 0
+    var bindToPortInterfaceCalled: Bool {
+        return bindToPortInterfaceCallsCount > 0
+    }
+    var bindToPortInterfaceReceivedArguments: (port: UInt16, interface: String?)?
+    var bindToPortInterfaceReceivedInvocations: [(port: UInt16, interface: String?)] = []
+    var bindToPortInterfaceClosure: ((UInt16, String?) throws -> Void)?
+
+    func bind(toPort port: UInt16, interface: String?) throws {
+        if let error = bindToPortInterfaceThrowableError {
+            throw error
+        }
+        bindToPortInterfaceCallsCount += 1
+        bindToPortInterfaceReceivedArguments = (port: port, interface: interface)
+        bindToPortInterfaceReceivedInvocations.append((port: port, interface: interface))
+        try bindToPortInterfaceClosure?(port, interface)
+    }
+
+    //MARK: - close
+
+    var closeCallsCount = 0
+    var closeCalled: Bool {
+        return closeCallsCount > 0
+    }
+    var closeClosure: (() -> Void)?
+
+    func close() {
+        closeCallsCount += 1
+        closeClosure?()
+    }
+
+    //MARK: - enableBroadcast
+
+    var enableBroadcastThrowableError: Error?
+    var enableBroadcastCallsCount = 0
+    var enableBroadcastCalled: Bool {
+        return enableBroadcastCallsCount > 0
+    }
+    var enableBroadcastReceivedFlag: Bool?
+    var enableBroadcastReceivedInvocations: [Bool] = []
+    var enableBroadcastClosure: ((Bool) throws -> Void)?
+
+    func enableBroadcast(_ flag: Bool) throws {
+        if let error = enableBroadcastThrowableError {
+            throw error
+        }
+        enableBroadcastCallsCount += 1
+        enableBroadcastReceivedFlag = flag
+        enableBroadcastReceivedInvocations.append(flag)
+        try enableBroadcastClosure?(flag)
+    }
+
+    //MARK: - enableReusePort
+
+    var enableReusePortThrowableError: Error?
+    var enableReusePortCallsCount = 0
+    var enableReusePortCalled: Bool {
+        return enableReusePortCallsCount > 0
+    }
+    var enableReusePortReceivedFlag: Bool?
+    var enableReusePortReceivedInvocations: [Bool] = []
+    var enableReusePortClosure: ((Bool) throws -> Void)?
+
+    func enableReusePort(_ flag: Bool) throws {
+        if let error = enableReusePortThrowableError {
+            throw error
+        }
+        enableReusePortCallsCount += 1
+        enableReusePortReceivedFlag = flag
+        enableReusePortReceivedInvocations.append(flag)
+        try enableReusePortClosure?(flag)
+    }
+
+    //MARK: - isClosed
+
+    var isClosedCallsCount = 0
+    var isClosedCalled: Bool {
+        return isClosedCallsCount > 0
+    }
+    var isClosedReturnValue: Bool!
+    var isClosedClosure: (() -> Bool)?
+
+    func isClosed() -> Bool {
+        isClosedCallsCount += 1
+        if let isClosedClosure = isClosedClosure {
+            return isClosedClosure()
+        } else {
+            return isClosedReturnValue
+        }
+    }
+
+    //MARK: - joinMulticastGroup
+
+    var joinMulticastGroupOnInterfaceThrowableError: Error?
+    var joinMulticastGroupOnInterfaceCallsCount = 0
+    var joinMulticastGroupOnInterfaceCalled: Bool {
+        return joinMulticastGroupOnInterfaceCallsCount > 0
+    }
+    var joinMulticastGroupOnInterfaceReceivedArguments: (group: String, interface: String?)?
+    var joinMulticastGroupOnInterfaceReceivedInvocations: [(group: String, interface: String?)] = []
+    var joinMulticastGroupOnInterfaceClosure: ((String, String?) throws -> Void)?
+
+    func joinMulticastGroup(_ group: String, onInterface interface: String?) throws {
+        if let error = joinMulticastGroupOnInterfaceThrowableError {
+            throw error
+        }
+        joinMulticastGroupOnInterfaceCallsCount += 1
+        joinMulticastGroupOnInterfaceReceivedArguments = (group: group, interface: interface)
+        joinMulticastGroupOnInterfaceReceivedInvocations.append((group: group, interface: interface))
+        try joinMulticastGroupOnInterfaceClosure?(group, interface)
+    }
+
+    //MARK: - send
+
+    var sendToHostPortWithTimeoutTagCallsCount = 0
+    var sendToHostPortWithTimeoutTagCalled: Bool {
+        return sendToHostPortWithTimeoutTagCallsCount > 0
+    }
+    var sendToHostPortWithTimeoutTagReceivedArguments: (data: Data, host: String, port: UInt16, timeout: TimeInterval, tag: Int)?
+    var sendToHostPortWithTimeoutTagReceivedInvocations: [(data: Data, host: String, port: UInt16, timeout: TimeInterval, tag: Int)] = []
+    var sendToHostPortWithTimeoutTagClosure: ((Data, String, UInt16, TimeInterval, Int) -> Void)?
+
+    func send(_ data: Data, toHost host: String, port: UInt16, withTimeout timeout: TimeInterval, tag: Int) {
+        sendToHostPortWithTimeoutTagCallsCount += 1
+        sendToHostPortWithTimeoutTagReceivedArguments = (data: data, host: host, port: port, timeout: timeout, tag: tag)
+        sendToHostPortWithTimeoutTagReceivedInvocations.append((data: data, host: host, port: port, timeout: timeout, tag: tag))
+        sendToHostPortWithTimeoutTagClosure?(data, host, port, timeout, tag)
+    }
+
+    //MARK: - setDelegate
+
+    var setDelegateDelegateQueueCallsCount = 0
+    var setDelegateDelegateQueueCalled: Bool {
+        return setDelegateDelegateQueueCallsCount > 0
+    }
+    var setDelegateDelegateQueueReceivedArguments: (delegate: _SocketDelegate?, delegateQueue: DispatchQueue?)?
+    var setDelegateDelegateQueueReceivedInvocations: [(delegate: _SocketDelegate?, delegateQueue: DispatchQueue?)] = []
+    var setDelegateDelegateQueueClosure: ((_SocketDelegate?, DispatchQueue?) -> Void)?
+
+    func setDelegate(_ delegate: _SocketDelegate?, delegateQueue: DispatchQueue?) {
+        setDelegateDelegateQueueCallsCount += 1
+        setDelegateDelegateQueueReceivedArguments = (delegate: delegate, delegateQueue: delegateQueue)
+        setDelegateDelegateQueueReceivedInvocations.append((delegate: delegate, delegateQueue: delegateQueue))
+        setDelegateDelegateQueueClosure?(delegate, delegateQueue)
+    }
+
+}
 class _MooTransportMock: _MooTransport {
 
 

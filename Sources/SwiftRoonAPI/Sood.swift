@@ -98,7 +98,7 @@ class Sood: NSObject {
         if unicast.sendSocket == nil {
             logger.log("Creating unicast")
             do {
-                let socket = try Socket(port: 0, enableBroadcast: true)
+                let socket = try SocketFacade(port: 0, enableBroadcast: true)
                 socket.onError = { [weak socket] error in
                     socket?.close()
                 }
@@ -185,7 +185,7 @@ class Sood: NSObject {
         if interface.receiveSocket == nil {
             newInterface = true
             do {
-                let socket = try Socket(port: Sood.soodPort,
+                let socket = try SocketFacade(port: Sood.soodPort,
                                         enableReusePort: true,
                                         joinMulticastGroup: Sood.soodMulticastIP,
                                         onInterface: netInfo.ip)
@@ -209,7 +209,7 @@ class Sood: NSObject {
             newInterface = true
             interface.broadcast = netInfo.broadcast
             do {
-                let socket = try Socket(port: 0,
+                let socket = try SocketFacade(port: 0,
                                         address: netInfo.ip,
                                         enableBroadcast: true)
                 socket.onError = { [weak socket] error in

@@ -1,5 +1,5 @@
 //
-//  Socket.swift
+//  SocketFacade.swift
 //  RoonMiniPlayer
 //
 //  Created by Alejandro Maya on 26/01/23.
@@ -12,25 +12,38 @@ enum SocketError: Error {
     case unableToCreateSocket
 }
 
-class Socket: NSObject {
+protocol _AsyncSocket: AutoMockable {
+    func beginReceiving() throws
+    func bind(toPort port: UInt16) throws
+    func bind(toPort port: UInt16, interface: String?) throws
+    func close()
+    func enableBroadcast(_ flag: Bool) throws
+    func enableReusePort(_ flag: Bool) throws
+    func isClosed() -> Bool
+    func joinMulticastGroup(_ group: String, onInterface interface: String?) throws
+    func send(_ data: Data, toHost host: String, port: UInt16, withTimeout timeout: TimeInterval, tag: Int)
+    func setDelegate(_ delegate: _SocketDelegate?, delegateQueue: DispatchQueue?)
+}
+
+extension GCDAsyncUdpSocket: _AsyncSocket {}
+
+typealias _SocketDelegate = GCDAsyncUdpSocketDelegate
+
+class SocketFacade: NSObject {
 
     var onError: ((Error?) -> Void)?
     var onClose: (() -> Void)?
     var onMessage: ((Data, MessageInfo) -> Void)?
-    private let socket: GCDAsyncUdpSocket
-    private let address: String?
-    private let port: UInt16
+    private let socket: _AsyncSocket
 
     init(port: UInt16,
          address: String? = nil,
          enableBroadcast: Bool = false,
          enableReusePort: Bool = false,
          joinMulticastGroup multicastGroup: String? = nil,
-         onInterface interface: String? = nil) throws {
+         onInterface interface: String? = nil,
+         socket: _AsyncSocket = GCDAsyncUdpSocket()) throws {
         do {
-            self.address = address
-            self.port = port
-            let socket = GCDAsyncUdpSocket()
             self.socket = socket
             super.init()
             socket.setDelegate(self, delegateQueue: .main)
@@ -67,7 +80,7 @@ class Socket: NSObject {
 
 }
 
-extension Socket: GCDAsyncUdpSocketDelegate {
+extension SocketFacade: GCDAsyncUdpSocketDelegate {
 
     func udpSocket(_ sock: GCDAsyncUdpSocket, didNotConnect error: Error?) {
         onError?(error)
