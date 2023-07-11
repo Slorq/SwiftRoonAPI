@@ -59,7 +59,7 @@ jobs:
           ${{ secrets.LOGGER }}
         repo-mappings: |
           github.com/Slorq/SwiftLogger
-    - name: Run tests
+    - name: Run SwiftRoonAPI tests
       run: |
         swift test --enable-code-coverage --filter SwiftRoonAPITests
         xcrun llvm-cov export -format="lcov" .build/debug/SwiftRoonAPIPackageTests.xctest/Contents/MacOS/SwiftRoonAPIPackageTests -instr-profile .build/debug/codecov/default.profdata -ignore-filename-regex=".build|Tests" SwiftRoonAPI > info.lcov
@@ -83,7 +83,7 @@ jobs:
           ${{ secrets.LOGGER }}
         repo-mappings: |
           github.com/Slorq/SwiftLogger
-    - name: Run tests
+    - name: Run TransportAPI tests
       run: |
         swift test --enable-code-coverage --filter RoonTransportAPITests
         xcrun llvm-cov export -format="lcov" .build/debug/SwiftRoonAPIPackageTests.xctest/Contents/MacOS/SwiftRoonAPIPackageTests -instr-profile .build/debug/codecov/default.profdata -ignore-filename-regex=".build|Tests" TransportAPI > info.lcov
