@@ -53,7 +53,7 @@ let package = Package(
         ),
         .target(
             name: "RoonTransportAPI",
-            dependencies: ["SwiftRoonAPICore", "SwiftRoonAPI", "SwiftLogger"],
+            dependencies: ["SwiftRoonAPI", "SwiftLogger"],
             path: "TransportAPI",
             exclude: [
                 "Tests",
@@ -65,6 +65,11 @@ let package = Package(
 
         // Test targets
 
+        .testTarget(
+            name: "SwiftRoonAPICoreTests",
+            dependencies: ["SwiftRoonAPICore"],
+            path: "SwiftRoonAPICore/Tests"
+        ),
         .testTarget(
             name: "SwiftRoonAPITests",
             dependencies: ["SwiftRoonAPI"],

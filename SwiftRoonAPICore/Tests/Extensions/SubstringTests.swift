@@ -6,7 +6,7 @@
 //
 
 import XCTest
-@testable import SwiftRoonAPI
+@testable import SwiftRoonAPICore
 
 final class SubstringTests: XCTestCase {
 
