@@ -4,8 +4,6 @@
 name: Run tests
 
 on:
-  push:
-    branches: [ "main" ]
   pull_request:
     branches: [ "main", "develop" ]
 
@@ -19,7 +17,6 @@ jobs:
       swift-roon-api: ${{ steps.changes.outputs.swift-roon-api }}
       transport-api: ${{ steps.changes.outputs.transport-api }}
     steps:
-    - uses: actions/checkout@v3
     - uses: dorny/paths-filter@v2
       id: changes
       with:
