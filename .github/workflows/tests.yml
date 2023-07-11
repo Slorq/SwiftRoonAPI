@@ -12,6 +12,8 @@ on:
 jobs:
   changes:
     runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
     outputs:
       core: ${{ steps.changes.outputs.core }}
       swift-roon-api: ${{ steps.changes.outputs.swift-roon-api }}
