@@ -12,23 +12,73 @@ let package = Package(
         // Products define the executables and libraries a package produces, and make them visible to other packages.
         .library(
             name: "SwiftRoonAPI",
-            targets: ["SwiftRoonAPI"]),
+            targets: ["SwiftRoonAPI"]
+        ),
+        .library(
+            name: "RoonTransportAPI",
+            targets: ["RoonTransportAPI"]
+        )
     ],
     dependencies: [
         .package(url: "git@github.com:Slorq/SwiftLogger.git", .upToNextMajor(from: "0.0.1")),
         .package(url: "https://github.com/robbiehanson/CocoaAsyncSocket", .upToNextMajor(from: "7.0.0")),
     ],
     targets: [
-        // Targets are the basic building blocks of a package. A target can define a module or a test suite.
-        // Targets can depend on other targets in this package, and on products in packages this package depends on.
+
+        // API
+
+        .target(
+            name: "SwiftRoonAPICore",
+            path: "SwiftRoonAPICore",
+            exclude: [
+                "Tests"
+            ],
+            sources: [
+                "SwiftRoonAPICore/"
+            ]
+        ),
         .target(
             name: "SwiftRoonAPI",
-            dependencies: ["CocoaAsyncSocket", "SwiftLogger"],
+            dependencies: ["SwiftRoonAPICore", "CocoaAsyncSocket", "SwiftLogger"],
+            path: "SwiftRoonAPI",
+            exclude: [
+                "Tests",
+            ],
+            sources: [
+                "SwiftRoonAPI/",
+            ],
             swiftSettings: [
                 .unsafeFlags(["-suppress-warnings"]),
-            ]),
+            ]
+        ),
+        .target(
+            name: "RoonTransportAPI",
+            dependencies: ["SwiftRoonAPI", "SwiftLogger"],
+            path: "TransportAPI",
+            exclude: [
+                "Tests",
+            ],
+            sources: [
+                "TransportAPI/",
+            ]
+        ),
+
+        // Test targets
+
+        .testTarget(
+            name: "SwiftRoonAPICoreTests",
+            dependencies: ["SwiftRoonAPICore"],
+            path: "SwiftRoonAPICore/Tests"
+        ),
         .testTarget(
             name: "SwiftRoonAPITests",
-            dependencies: ["SwiftRoonAPI"]),
+            dependencies: ["SwiftRoonAPI"],
+            path: "SwiftRoonAPI/Tests"
+        ),
+        .testTarget(
+            name: "RoonTransportAPITests",
+            dependencies: ["RoonTransportAPI"],
+            path: "TransportAPI/Tests"
+        ),
     ]
 )

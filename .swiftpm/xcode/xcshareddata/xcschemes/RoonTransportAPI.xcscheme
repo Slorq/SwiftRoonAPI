@@ -14,9 +14,9 @@
             buildForAnalyzing = "YES">
             <BuildableReference
                BuildableIdentifier = "primary"
-               BlueprintIdentifier = "SwiftRoonAPI"
-               BuildableName = "SwiftRoonAPI"
-               BlueprintName = "SwiftRoonAPI"
+               BlueprintIdentifier = "RoonTransportAPI"
+               BuildableName = "RoonTransportAPI"
+               BlueprintName = "RoonTransportAPI"
                ReferencedContainer = "container:">
             </BuildableReference>
          </BuildActionEntry>
@@ -49,9 +49,9 @@
       <MacroExpansion>
          <BuildableReference
             BuildableIdentifier = "primary"
-            BlueprintIdentifier = "SwiftRoonAPI"
-            BuildableName = "SwiftRoonAPI"
-            BlueprintName = "SwiftRoonAPI"
+            BlueprintIdentifier = "RoonTransportAPI"
+            BuildableName = "RoonTransportAPI"
+            BlueprintName = "RoonTransportAPI"
             ReferencedContainer = "container:">
          </BuildableReference>
       </MacroExpansion>
