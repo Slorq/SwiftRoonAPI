@@ -128,7 +128,7 @@ public class RoonAPI: NSObject {
                                    foundCore: { [weak self] core in
                 guard let self else { return }
                 if self.pairedCore == nil {
-                    roonSettings.pairedCoreID = core.coreID
+                    self.roonSettings.pairedCoreID = core.coreID
 
                     self.pairedCore = core
                     self.isPaired = true
@@ -306,7 +306,7 @@ public class RoonAPI: NSObject {
                     return
                 }
 
-                if let token = roonSettings.roonState?.tokens[core.coreID] {
+                if let token = self.roonSettings.roonState?.tokens[core.coreID] {
                     self.extensionRegInfo.token = token
                 }
 
