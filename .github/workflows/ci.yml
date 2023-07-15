@@ -13,8 +13,7 @@ jobs:
     
   test: 
     runs-on: macos-13
-    permissions:
-      pull-requests: read
+    permissions: read-all
     steps:
     - name: Swift version
       run: |
