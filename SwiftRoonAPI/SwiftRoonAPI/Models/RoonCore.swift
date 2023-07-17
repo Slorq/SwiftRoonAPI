@@ -28,8 +28,12 @@ public class RoonCore: Codable {
         case extensionHost = "extension_host"
     }
 
-    public func sendRequest(name: MooName, body: Data? = nil, contentType: String? = nil, completion: ((MooMessage?) -> Void)?) {
-        moo.sendRequest(name: name, body: body, contentType: contentType, completion: completion)
+    public func sendRequest(name: MooName, body: Data? = nil, contentType: String? = nil) async -> MooMessage? {
+        await withCheckedContinuation { continuation in
+            moo.sendRequest(name: name, body: body, contentType: contentType) {
+                continuation.resume(returning: $0)
+            }
+        }
     }
 
     public func subscribeHelper(serviceName: String, requestName: String, body: Data? = nil, completion: ((MooMessage?) -> Void)?) {

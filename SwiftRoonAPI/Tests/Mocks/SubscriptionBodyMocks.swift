@@ -10,8 +10,8 @@ import Foundation
 
 extension SubscriptionBody {
 
-    static func makeEncoded() throws -> Data {
-        try SubscriptionBody(subscriptionKey: "1").jsonEncoded()
+    static func makeEncoded() throws -> Data? {
+        SubscriptionBody(subscriptionKey: "1").jsonEncoded()
     }
 
 }
