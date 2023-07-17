@@ -54,8 +54,8 @@ extension RoonTransportAPI {
          * Pause all zones.
          * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
          */
-        func pauseAll() {
-            logger.log(level: .error, "Not implemented \(#function)")
+        public func pauseAll() async -> Bool {
+            await core.sendRequest(name: .transport + "/pause_all")?.name == .success
         }
 
         /**
