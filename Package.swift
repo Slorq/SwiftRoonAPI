@@ -67,6 +67,7 @@ let package = Package(
 
         .target(
             name: "TestsCommon",
+            dependencies: ["SwiftRoonAPICore"],
             path: "SwiftRoonAPICore/Mocks/Generated"
         ),
         .testTarget(
