@@ -7,7 +7,7 @@
 
 import Foundation
 
-public struct RoonZone: Codable, RoonIdentifiable {
+public struct RoonZone: Codable, RoonIdentifiable, Equatable {
     public let displayName: String
     public let isNextAllowed: Bool
     public let isPauseAllowed: Bool
@@ -29,7 +29,7 @@ extension RoonZone {
 
 public extension RoonZone {
 
-    struct NowPlaying: Codable {
+    struct NowPlaying: Codable, Equatable {
         public let artistImageKeys: [String]
         public let imageKey: String?
         public let length: Double
@@ -39,7 +39,7 @@ public extension RoonZone {
         public let twoLine: DisplayLines
     }
 
-    struct Settings: Codable {
+    struct Settings: Codable, Equatable {
         public let autoRadio: Bool
         public let loop: String
         public let shuffle: Bool
@@ -49,7 +49,7 @@ public extension RoonZone {
 
 public extension RoonZone.NowPlaying {
 
-    struct DisplayLines: Codable {
+    struct DisplayLines: Codable, Equatable {
         public let line1: String?
         public let line2: String?
         public let line3: String?

@@ -10,13 +10,33 @@ import Foundation
 public class RoonCore: Codable {
 
     public let coreID: String
-    let displayName: String
-    let displayVersion: String
-    let token: String?
-    let providedServices: [RoonServiceName]?
-    let httpPort: UInt16?
-    let extensionHost: String?
-    unowned var moo: Moo!
+    public let displayName: String
+    public let displayVersion: String
+    public let token: String?
+    public let providedServices: [RoonServiceName]?
+    public let httpPort: UInt16?
+    public let extensionHost: String?
+    public unowned var moo: Moo!
+
+    #if DEBUG
+    public init(coreID: String,
+                displayName: String,
+                displayVersion: String,
+                token: String?,
+                providedServices: [RoonServiceName]?,
+                httpPort: UInt16?,
+                extensionHost: String?,
+                moo: Moo) {
+        self.coreID = coreID
+        self.displayName = displayName
+        self.displayVersion = displayVersion
+        self.token = token
+        self.providedServices = providedServices
+        self.httpPort = httpPort
+        self.extensionHost = extensionHost
+        self.moo = moo
+    }
+    #endif
 
     enum CodingKeys: String, CodingKey {
         case coreID = "core_id"

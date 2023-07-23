@@ -21,7 +21,7 @@ final class RegisteredServiceHandlerTests: XCTestCase {
             ]
         ]
         let transport = _MooTransportMock()
-        let moo = Moo(transport: transport)
+        let moo = _Moo(transport: transport)
         let name = "name"
         let body = "data".data(using: .utf8)
 
