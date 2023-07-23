@@ -6,18 +6,22 @@
 //
 
 import Foundation
+import SwiftRoonAPICore
 
-typealias TransportRequestName = String
+struct TransportSubscriptionName {
 
-extension TransportRequestName {
-    static var zones: TransportRequestName { "zones" }
+    static var zones: String { "zones" }
+
 }
 
-extension TransportRequestName {
-    static var control: TransportRequestName { .transport + "/control" }
-    static var getOutputs: TransportRequestName { .transport + "/get_outputs" }
-    static var getZones: TransportRequestName { .transport + "/get_zones" }
-    static var muteAll: TransportRequestName { .transport + "/mute_all" }
-    static var pauseAll: TransportRequestName { .transport + "/pause_all" }
-    static var seek: TransportRequestName { .transport + "/seek" }
+struct TransportRequestName {
+
+    static var control: String { .transport + "/control" }
+    static var getOutputs: String { .transport + "/get_outputs" }
+    static var getZones: String { .transport + "/get_zones" }
+    static var mute: String { .transport + "/mute" }
+    static var muteAll: String { .transport + "/mute_all" }
+    static var pauseAll: String { .transport + "/pause_all" }
+    static var seek: String { .transport + "/seek" }
+
 }

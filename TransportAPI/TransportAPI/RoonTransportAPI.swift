@@ -38,7 +38,7 @@ extension RoonCore {
     public func muteAll(_ how: MuteHow) async -> Bool {
         let muteRequest = MuteRequest(how: how)
         let body = muteRequest.jsonEncoded()
-        let message = await sendRequest(name: .muteAll, body: body)
+        let message = await sendRequest(name: TransportRequestName.muteAll, body: body)
         return message?.name == .success
     }
 
@@ -47,7 +47,7 @@ extension RoonCore {
      * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
      */
     public func pauseAll() async -> Bool {
-        await sendRequest(name: .pauseAll)?.name == .success
+        await sendRequest(name: TransportRequestName.pauseAll)?.name == .success
     }
 
     /**
@@ -93,11 +93,11 @@ extension RoonCore {
      * Mute/unmute an output.
      * @param {Output} output - The output to mute.
      * @param {('mute'|'unmute')} how - The action to take
-     * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
      */
-    func mute() async -> Bool {
-        Self.logger.log(level: .error, "Function not implemented: \(#function)")
-        return false
+    public func mute(output: RoonOutput, how: MuteHow) async -> Bool {
+        let body = MuteOutputRequest(outputID: output.id, how: how).jsonEncoded()
+        let message = await sendRequest(name: TransportRequestName.mute, body: body)
+        return message?.name == .success
     }
 
     /**
@@ -125,7 +125,7 @@ extension RoonCore {
     public func seek(identifiable: RoonIdentifiable, how: SeekHow, seconds: Double) async -> Bool {
         let zoneSeek = ZoneSeekRequest(zoneOrOutputID: identifiable.id, how: how, seconds: seconds)
         let body = zoneSeek.jsonEncoded()
-        let message = await sendRequest(name: .seek, body: body)
+        let message = await sendRequest(name: TransportRequestName.seek, body: body)
         return message?.name == .success
     }
 
@@ -150,7 +150,7 @@ extension RoonCore {
     public func control(identifiable: RoonIdentifiable, control: RoonControl) async -> Bool {
         let zoneControl = ZoneControl(zoneOrOutputID: identifiable.id, control: control)
         let body = zoneControl.jsonEncoded()
-        let message = await sendRequest(name: .control, body: body)
+        let message = await sendRequest(name: TransportRequestName.control, body: body)
         return message?.name == .success
     }
 
@@ -204,7 +204,7 @@ extension RoonCore {
     }
 
     public func getZones() async -> [RoonZone] {
-        let message = await sendRequest(name: .getZones)
+        let message = await sendRequest(name: TransportRequestName.getZones)
         guard let body = message?.body,
               let response = try? JSONDecoder.fromSnakeCase.decode(GetZonesResponse.self, from: body) else {
             return []
@@ -214,7 +214,7 @@ extension RoonCore {
     }
 
     public func getOutputs() async -> [RoonOutput] {
-        let message = await sendRequest(name: .getOutputs)
+        let message = await sendRequest(name: TransportRequestName.getOutputs)
         guard let body = message?.body,
               let response = try? JSONDecoder.fromSnakeCase.decode(GetOutputsResponse.self, from: body) else {
             return []
@@ -226,7 +226,7 @@ extension RoonCore {
     public func subscribeZones(completion: @escaping (([RoonZone]) -> Void)) {
         var zones: [String: RoonZone] = [:]
         subscribeHelper(serviceName: .transport,
-                        requestName: TransportRequestName.zones) { message in
+                        requestName: TransportSubscriptionName.zones) { message in
             guard let message = message,
                   let data = message.body,
                   let response = try? JSONDecoder.fromSnakeCase.decode(SubscribeZonesResponse.self, from: data) else {
