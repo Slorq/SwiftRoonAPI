@@ -49,17 +49,17 @@ jobs:
     - name: Run Core tests
       run: |
         swift test --enable-code-coverage --filter SwiftRoonAPICoreTests
-        xcrun llvm-cov export -format="lcov" .build/debug/SwiftRoonAPIPackageTests.xctest/Contents/MacOS/SwiftRoonAPIPackageTests -instr-profile .build/debug/codecov/default.profdata -ignore-filename-regex=".build|Tests" SwiftRoonAPICore > core.lcov
+        xcrun llvm-cov export -format="lcov" .build/debug/SwiftRoonAPIPackageTests.xctest/Contents/MacOS/SwiftRoonAPIPackageTests -instr-profile .build/debug/codecov/default.profdata -ignore-filename-regex=".build|Tests" > core.lcov
     - name: Run SwiftRoonAPI tests
       if: steps.changes.outputs.swift-roon-api == 'true'
       run: |
-        swift test --enable-code-coverage --filter "SwiftRoonAPITests|SwiftRoonAPICoreTests"
-        xcrun llvm-cov export -format="lcov" .build/debug/SwiftRoonAPIPackageTests.xctest/Contents/MacOS/SwiftRoonAPIPackageTests -instr-profile .build/debug/codecov/default.profdata -ignore-filename-regex=".build|Tests" SwiftRoonAPI > swift-roon-api.lcov
+        swift test --enable-code-coverage --filter SwiftRoonAPITests
+        xcrun llvm-cov export -format="lcov" .build/debug/SwiftRoonAPIPackageTests.xctest/Contents/MacOS/SwiftRoonAPIPackageTests -instr-profile .build/debug/codecov/default.profdata -ignore-filename-regex=".build|Tests" > swift-roon-api.lcov
     - name: Run TransportAPI tests
       if: steps.changes.outputs.transport-api == 'true'
       run: |
-        swift test --enable-code-coverage --filter "RoonTransportAPITests|SwiftRoonAPICoreTests"
-        xcrun llvm-cov export -format="lcov" .build/debug/SwiftRoonAPIPackageTests.xctest/Contents/MacOS/SwiftRoonAPIPackageTests -instr-profile .build/debug/codecov/default.profdata -ignore-filename-regex=".build|Tests" TransportAPI > transport.lcov
+        swift test --enable-code-coverage --filter RoonTransportAPITests
+        xcrun llvm-cov export -format="lcov" .build/debug/SwiftRoonAPIPackageTests.xctest/Contents/MacOS/SwiftRoonAPIPackageTests -instr-profile .build/debug/codecov/default.profdata -ignore-filename-regex=".build|Tests" > transport.lcov
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
       with:
