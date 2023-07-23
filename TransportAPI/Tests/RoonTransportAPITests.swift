@@ -78,6 +78,26 @@ final class RoonTransportAPITests: XCTestCase {
         XCTAssertTrue(succeeded)
     }
 
+    func testChangeVolume() async {
+        // Given
+        mooMock.sendRequestNameBodyContentTypeCompletionClosure = { mooName, body, contentType, completion in
+            let bodyString = body.flatMap { String(data: $0, encoding: .utf8) }
+
+            XCTAssertEqual(mooName, "com.roonlabs.transport:2/change_volume")
+            XCTAssertEqual(bodyString, "{\"how\":\"absolute\",\"output_id\":\"OutputID-1\",\"value\":50}")
+            XCTAssertNil(contentType)
+            completion?(.init(requestID: 1, verb: .request, name: .success))
+        }
+        let roonOutput = RoonOutput.make()
+
+        // When
+        let succeeded = await core.changeVolume(output: roonOutput, how: .absolute, value: 50)
+
+        // Then
+        XCTAssertEqual(mooMock.sendRequestNameBodyContentTypeCompletionCallsCount, 1)
+        XCTAssertTrue(succeeded)
+    }
+
     func testSeek() async {
         // Given
         mooMock.sendRequestNameBodyContentTypeCompletionClosure = { mooName, body, contentType, completion in

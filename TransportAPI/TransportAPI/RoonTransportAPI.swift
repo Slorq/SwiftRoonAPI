@@ -110,9 +110,10 @@ extension RoonCore {
      * @param {number} value - The new volume value, or the increment value or step
      * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
      */
-    func changeVolume() async -> Bool {
-        Self.logger.log(level: .error, "Function not implemented: \(#function)")
-        return false
+    public func changeVolume(output: RoonOutput, how: ChangeVolumeHow, value: Double) async -> Bool {
+        let body = ChangeVolumeRequest(outputID: output.id, how: how, value: value).jsonEncoded()
+        let message = await sendRequest(name: TransportRequestName.changeVolume, body: body)
+        return message?.name == .success
     }
 
     /**
