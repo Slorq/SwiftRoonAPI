@@ -8,6 +8,7 @@
 import Foundation
 
 public struct RoonOutput: Codable, RoonIdentifiable, Equatable {
+    public var id: String { outputId }
     let canGroupWithOutputIds: [String]
     let displayName: String
     let outputId: String
@@ -36,8 +37,4 @@ extension RoonOutput {
         let type: String
         let value: Double
     }
-}
-
-extension RoonOutput {
-    public var id: String { outputId }
 }
