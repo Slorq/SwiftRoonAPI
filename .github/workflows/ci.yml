@@ -47,19 +47,18 @@ jobs:
           transport-api:
             - 'TransportAPI/**'
     - name: Run Core tests
-      if: steps.changes.outputs.core == 'true'
       run: |
         swift test --enable-code-coverage --filter SwiftRoonAPICoreTests
         xcrun llvm-cov export -format="lcov" .build/debug/SwiftRoonAPIPackageTests.xctest/Contents/MacOS/SwiftRoonAPIPackageTests -instr-profile .build/debug/codecov/default.profdata -ignore-filename-regex=".build|Tests" SwiftRoonAPICore > core.lcov
     - name: Run SwiftRoonAPI tests
       if: steps.changes.outputs.swift-roon-api == 'true'
       run: |
-        swift test --enable-code-coverage --filter SwiftRoonAPITests
+        swift test --enable-code-coverage --filter "SwiftRoonAPITests|SwiftRoonAPICoreTests"
         xcrun llvm-cov export -format="lcov" .build/debug/SwiftRoonAPIPackageTests.xctest/Contents/MacOS/SwiftRoonAPIPackageTests -instr-profile .build/debug/codecov/default.profdata -ignore-filename-regex=".build|Tests" SwiftRoonAPI > swift-roon-api.lcov
     - name: Run TransportAPI tests
       if: steps.changes.outputs.transport-api == 'true'
       run: |
-        swift test --enable-code-coverage --filter RoonTransportAPITests
+        swift test --enable-code-coverage --filter "RoonTransportAPITests|SwiftRoonAPICoreTests"
         xcrun llvm-cov export -format="lcov" .build/debug/SwiftRoonAPIPackageTests.xctest/Contents/MacOS/SwiftRoonAPIPackageTests -instr-profile .build/debug/codecov/default.profdata -ignore-filename-regex=".build|Tests" TransportAPI > transport.lcov
     - name: Upload coverage reports to Codecov
       uses: codecov/codecov-action@v3
