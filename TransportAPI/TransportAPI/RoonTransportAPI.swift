@@ -331,9 +331,12 @@ extension RoonCore {
         await getZones().first(where: { $0.outputs.map({ $0.id }).contains(outputID) })
     }
 
-    func zone(byObject objectID: String) async -> Bool {
-        Self.logger.log(level: .error, "Function not implemented: \(#function)")
-        return false
+    func zone(byObjectID objectID: String) async -> RoonZone? {
+        if let zone = await zone(byZoneID: objectID) {
+            return zone
+        } else {
+            return await zone(byOutputID: objectID)
+        }
     }
 
 }
