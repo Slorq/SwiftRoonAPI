@@ -195,9 +195,12 @@ extension RoonCore {
      * @param {Output[]} outputs - The outputs to ungroup.
      * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
      */
-    func ungroupOutputs() async -> Bool {
-        Self.logger.log(level: .error, "Function not implemented: \(#function)")
-        return false
+    public func ungroupOutputs(outputs: [RoonOutput]) async -> Bool {
+        let outputIDs = outputs.map { $0.id }
+        let request = GroupOutputsRequest(outputIDs: outputIDs)
+        let body = request.jsonEncoded()
+        let message = await sendRequest(name: TransportRequestName.ungroupOutputs, body: body)
+        return message?.name == .success
     }
 
     /**

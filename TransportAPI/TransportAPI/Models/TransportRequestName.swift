@@ -29,5 +29,6 @@ struct TransportRequestName {
     static var standBy: String { .transport + "/standby" }
     static var toggleStandBy: String { .transport + "/toggle_standby" }
     static var transferZone: String { .transport + "/transfer_zone" }
+    static var ungroupOutputs: String { .transport + "/ungroup_outputs" }
 
 }
