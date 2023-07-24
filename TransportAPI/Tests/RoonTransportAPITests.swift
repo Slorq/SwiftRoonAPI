@@ -138,6 +138,27 @@ final class RoonTransportAPITests: XCTestCase {
         XCTAssertTrue(succeeded)
     }
 
+    func testTransferZone() async {
+        // Given
+        mooMock.sendRequestNameBodyContentTypeCompletionClosure = { mooName, body, contentType, completion in
+            let bodyString = body.flatMap { String(data: $0, encoding: .utf8) }
+
+            XCTAssertEqual(mooName, "com.roonlabs.transport:2/transfer_zone")
+            XCTAssertEqual(bodyString, "{\"from_zone_or_output_id\":\"SourceZoneID\",\"to_zone_or_output_id\":\"DestinationZoneID\"}")
+            XCTAssertNil(contentType)
+            completion?(.init(requestID: 1, verb: .request, name: .success))
+        }
+        let sourceZone = RoonZone.make(zoneId: "SourceZoneID")
+        let destinationZone = RoonZone.make(zoneId: "DestinationZoneID")
+
+        // When
+        let succeeded = await core.transferZone(from: sourceZone, to: destinationZone)
+
+        // Then
+        XCTAssertEqual(mooMock.sendRequestNameBodyContentTypeCompletionCallsCount, 1)
+        XCTAssertTrue(succeeded)
+    }
+
     func testGetZones() async {
         // Given
         let zones = [RoonZone.make()]

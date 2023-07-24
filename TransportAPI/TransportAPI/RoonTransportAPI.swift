@@ -162,9 +162,11 @@ extension RoonCore {
      * @param {Zone|Output} tozone - The destination zone or output
      * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
      */
-    func transferZone() async -> Bool {
-        Self.logger.log(level: .error, "Function not implemented: \(#function)")
-        return false
+    public func transferZone(from source: RoonIdentifiable, to destination: RoonIdentifiable) async -> Bool {
+        let request = TransferZoneRequest(sourceID: source.id, destinationID: destination.id)
+        let body = request.jsonEncoded()
+        let message = await sendRequest(name: TransportRequestName.transferZone, body: body)
+        return message?.name == .success
     }
 
     /**
