@@ -16,6 +16,7 @@ struct TransportSubscriptionName {
 
 struct TransportRequestName {
 
+    static var changeSettings: String { .transport + "/change_settings" }
     static var changeVolume: String { .transport + "/change_volume" }
     static var control: String { .transport + "/control" }
     static var convenienceSwitch: String { .transport + "/convenience_switch" }

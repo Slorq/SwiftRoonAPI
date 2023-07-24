@@ -30,7 +30,7 @@ extension RoonZone {
 public extension RoonZone {
 
     struct NowPlaying: Codable, Equatable {
-        public let artistImageKeys: [String]
+        public let artistImageKeys: [String]?
         public let imageKey: String?
         public let length: Double
         public let oneLine: DisplayLines

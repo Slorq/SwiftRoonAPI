@@ -261,6 +261,34 @@ final class RoonTransportAPITests: XCTestCase {
         XCTAssertTrue(succeeded)
     }
 
+    func testChangeSettings() async {
+        // Given
+        mooMock.sendRequestNameBodyContentTypeCompletionClosure = { mooName, body, contentType, completion in
+            let bodyString = body.flatMap { String(data: $0, encoding: .utf8) }
+
+            let jsonParts = [
+                "\"shuffle\":true",
+                "\"zone_or_output_id\":\"ZoneID-1\"",
+                "\"auto_radio\":true",
+                "\"loop\":\"next\""
+            ]
+            XCTAssertEqual(mooName, "com.roonlabs.transport:2/change_settings")
+            jsonParts.forEach { part in
+                XCTAssertEqual(bodyString?.contains(part), true)
+            }
+            XCTAssertNil(contentType)
+            completion?(.init(requestID: 1, verb: .request, name: .success))
+        }
+        let zone = RoonZone.make()
+
+        // When
+        let succeeded = await core.changeSettings(identifiable: zone, shuffle: true, autoRadio: true, loop: .next)
+
+        // Then
+        XCTAssertEqual(mooMock.sendRequestNameBodyContentTypeCompletionCallsCount, 1)
+        XCTAssertTrue(succeeded)
+    }
+
     func testGetZones() async {
         // Given
         let zones = [RoonZone.make()]

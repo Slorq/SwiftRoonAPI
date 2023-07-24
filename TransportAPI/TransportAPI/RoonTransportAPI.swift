@@ -213,9 +213,16 @@ extension RoonCore {
      * @param {('loop'|'loop_one'|'disabled'|'next')} [settings.loop] - If present, sets loop mode to the specified value. 'next' will cycle between the settings.
      * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
      */
-    func changeSettings() async -> Bool {
-        Self.logger.log(level: .error, "Function not implemented: \(#function)")
-        return false
+    public func changeSettings(identifiable: RoonIdentifiable, shuffle: Bool? = nil, autoRadio: Bool? = nil, loop: LoopSetting? = nil) async -> Bool {
+        let settings: [String: AnyEncodable?] = [
+            "auto_radio": autoRadio.toAnyCodable(),
+            "loop": loop?.rawValue.toAnyCodable(),
+            "shuffle": shuffle.toAnyCodable(),
+            "zone_or_output_id": identifiable.id.toAnyCodable(),
+        ]
+        let body = settings.jsonEncoded()
+        let message = await sendRequest(name: TransportRequestName.changeSettings, body: body)
+        return message?.name == .success
     }
 
     public func getZones() async -> [RoonZone] {
