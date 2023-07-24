@@ -18,6 +18,7 @@ struct TransportRequestName {
 
     static var changeVolume: String { .transport + "/change_volume" }
     static var control: String { .transport + "/control" }
+    static var convenienceSwitch: String { .transport + "/convenience_switch" }
     static var getOutputs: String { .transport + "/get_outputs" }
     static var getZones: String { .transport + "/get_zones" }
     static var mute: String { .transport + "/mute" }

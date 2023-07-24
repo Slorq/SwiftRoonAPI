@@ -98,6 +98,26 @@ final class RoonTransportAPITests: XCTestCase {
         XCTAssertTrue(succeeded)
     }
 
+    func testConvenienceSwitch() async {
+        // Given
+        mooMock.sendRequestNameBodyContentTypeCompletionClosure = { mooName, body, contentType, completion in
+            let bodyString = body.flatMap { String(data: $0, encoding: .utf8) }
+
+            XCTAssertEqual(mooName, "com.roonlabs.transport:2/convenience_switch")
+            XCTAssertEqual(bodyString, "{\"control_key\":\"ControlKey1\",\"output_id\":\"OutputID-1\"}")
+            XCTAssertNil(contentType)
+            completion?(.init(requestID: 1, verb: .request, name: .success))
+        }
+        let output = RoonOutput.make()
+
+        // When
+        let succeeded = await core.convenienceSwitch(output: output, options: ["control_key": "ControlKey1"])
+
+        // Then
+        XCTAssertEqual(mooMock.sendRequestNameBodyContentTypeCompletionCallsCount, 1)
+        XCTAssertTrue(succeeded)
+    }
+
     func testMute() async {
         // Given
         mooMock.sendRequestNameBodyContentTypeCompletionClosure = { mooName, body, contentType, completion in

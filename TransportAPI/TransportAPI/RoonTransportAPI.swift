@@ -88,9 +88,11 @@ extension RoonCore {
      * @param {string} [opts.control_key] - The <tt>control_key</tt> that identifies the <tt>source_control</tt> that is to be switched. If omitted, then all controls on this output will be convenience switched.
      * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
      */
-    func convenienceSwitch() async -> Bool {
-        Self.logger.log(level: .error, "Function not implemented: \(#function)")
-        return false
+    public func convenienceSwitch(output: RoonOutput, options: [String: String]) async -> Bool {
+        var options = options
+        options["output_id"] = output.id
+        let message = await sendRequest(name: TransportRequestName.convenienceSwitch, body: options.jsonEncoded())
+        return message?.name == .success
     }
 
     /**
