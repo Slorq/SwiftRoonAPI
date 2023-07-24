@@ -33,9 +33,6 @@ jobs:
           ${{ secrets.LOGGER }}
         repo-mappings: |
           github.com/Slorq/SwiftLogger
-    - name: Build package
-      run: |
-        swift build 
     - uses: dorny/paths-filter@v2
       id: changes
       with:
