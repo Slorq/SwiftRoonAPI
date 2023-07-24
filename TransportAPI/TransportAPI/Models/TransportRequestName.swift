@@ -21,6 +21,7 @@ struct TransportRequestName {
     static var convenienceSwitch: String { .transport + "/convenience_switch" }
     static var getOutputs: String { .transport + "/get_outputs" }
     static var getZones: String { .transport + "/get_zones" }
+    static var groupOutputs: String { .transport + "/group_outputs" }
     static var mute: String { .transport + "/mute" }
     static var muteAll: String { .transport + "/mute_all" }
     static var pauseAll: String { .transport + "/pause_all" }

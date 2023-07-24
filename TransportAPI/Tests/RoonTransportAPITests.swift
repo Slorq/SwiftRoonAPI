@@ -219,6 +219,27 @@ final class RoonTransportAPITests: XCTestCase {
         XCTAssertTrue(succeeded)
     }
 
+    func testGroupOutputs() async {
+        // Given
+        mooMock.sendRequestNameBodyContentTypeCompletionClosure = { mooName, body, contentType, completion in
+            let bodyString = body.flatMap { String(data: $0, encoding: .utf8) }
+
+            XCTAssertEqual(mooName, "com.roonlabs.transport:2/group_outputs")
+            XCTAssertEqual(bodyString, "{\"output_ids\":[\"OutputID-1\",\"OutputID-2\"]}")
+            XCTAssertNil(contentType)
+            completion?(.init(requestID: 1, verb: .request, name: .success))
+        }
+        let output1 = RoonOutput.make(outputID: "OutputID-1")
+        let output2 = RoonOutput.make(outputID: "OutputID-2")
+
+        // When
+        let succeeded = await core.groupOutputs(outputs: [output1, output2])
+
+        // Then
+        XCTAssertEqual(mooMock.sendRequestNameBodyContentTypeCompletionCallsCount, 1)
+        XCTAssertTrue(succeeded)
+    }
+
     func testGetZones() async {
         // Given
         let zones = [RoonZone.make()]
@@ -387,11 +408,11 @@ extension RoonZone {
 
 extension RoonOutput {
 
-    static func make() -> RoonOutput {
+    static func make(outputID: String = "OutputID-1") -> RoonOutput {
         RoonOutput(
             canGroupWithOutputIds: ["OutputID-2"],
             displayName: "Output Name",
-            outputId: "OutputID-1",
+            outputId: outputID,
             sourceControls: [],
             volume: nil,
             zoneId: "ZoneID-1"
