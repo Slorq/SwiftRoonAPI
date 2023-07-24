@@ -13,6 +13,8 @@ import SystemConfiguration
 
 private let roonServiceID = "00720724-5143-4a9b-abac-0e50cba674bb"
 
+public typealias RoonCore = SwiftRoonAPICore.RoonCore
+
 struct RoonServices {
     let required: [RoonServiceName]
     let optional: [RoonServiceName]
@@ -27,7 +29,6 @@ public class RoonAPI: NSObject {
     private let logger = Logger()
     private var extensionRegInfo: RoonExtensionRegInfo
     private var isPaired = false
-    private var moo: Moo!
     private var options: RoonOptions
     private var pairedCore: RoonCore?
     private var pairingService: PairingServiceRegistry?
@@ -88,12 +89,12 @@ public class RoonAPI: NSObject {
             let onPairingStart: (Moo, MooMessage) -> Void = { [weak self] moo, request in
                 let pairedCore = (self?.pairedCore?.coreID).map { PairedCore(coreID: $0) }
                 let body = try? pairedCore?.jsonEncoded()
-                moo.sendContinue(MooName.subscribed, body: body, message: request)
+                moo.sendContinue(MooName.subscribed, body: body, message: request, completion: nil)
             }
             let getPairing: (Moo, MooMessage) -> Void = { [weak self] moo, request in
                 let pairedCore = (self?.pairedCore?.coreID).map { PairedCore(coreID: $0) }
                 let body = try? pairedCore?.jsonEncoded()
-                moo.sendComplete(MooName.success, body: body, message: request)
+                moo.sendComplete(MooName.success, body: body, message: request, completion: nil)
             }
             let pair: (Moo, MooMessage) -> Void = { [weak self] moo, request in
                 guard let self,
@@ -294,7 +295,7 @@ public class RoonAPI: NSObject {
                            onError: @escaping (Error) -> Void) -> Moo {
         logger.log("Sood WS Connect \(hostIP):\(httpPort)")
         let transport = try! MooTransport(host: hostIP, port: httpPort)
-        let moo = Moo(transport: transport)
+        let moo = _Moo(transport: transport)
 
         moo.onOpen = { [weak self] moo in
             guard let self else { return }

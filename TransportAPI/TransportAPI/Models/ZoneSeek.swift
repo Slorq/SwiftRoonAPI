@@ -7,7 +7,14 @@
 
 import Foundation
 
-struct ZoneSeek: Codable {
+public enum SeekHow: String, Codable {
+
+    case absolute
+    case relative
+
+}
+
+struct ZoneSeekRequest: Codable {
 
     let zoneOrOutputID: String
     let how: SeekHow

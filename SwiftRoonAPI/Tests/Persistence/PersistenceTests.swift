@@ -18,6 +18,11 @@ final class PersistenceTests: XCTestCase {
         roonSettings = RoonSettings(userDefaults: userDefaults)
     }
 
+    override func tearDown() {
+        super.tearDown()
+        roonSettings.roonState = nil
+    }
+
     func testNilRoonState() {
         // Given
         // When

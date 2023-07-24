@@ -9,7 +9,7 @@ import Foundation
 import SwiftLogger
 import SwiftRoonAPICore
 
-public class Moo: NSObject {
+internal class _Moo: NSObject, Moo {
 
     private static var counter = 0
 
@@ -21,10 +21,10 @@ public class Moo: NSObject {
     private let mooEncoder: MooEncoder
     private let mooDecoder: MooDecoder
     let mooID: Int
-    var onOpen: ((Moo) -> Void)?
-    var onClose: ((Moo) -> Void)?
-    var onError: ((Moo, Error) -> Void)?
-    var onMessage: ((Moo, MooMessage) -> Void)?
+    var onOpen: ((_Moo) -> Void)?
+    var onClose: ((_Moo) -> Void)?
+    var onError: ((_Moo, Error) -> Void)?
+    var onMessage: ((_Moo, MooMessage) -> Void)?
     var core: RoonCore? {
         didSet {
             core?.moo = self
@@ -125,7 +125,7 @@ public class Moo: NSObject {
 
 }
 
-extension Moo: MooTransportDelegate {
+extension _Moo: MooTransportDelegate {
 
     func transportDidOpen(_ transport: MooTransport) {
         logger.log("Moo - didOpen")
@@ -171,7 +171,7 @@ protocol _MooTransport: AutoMockable {
 }
 
 #if DEBUG
-extension Moo {
+extension _Moo {
 
     var hooks: TestHooks {
         TestHooks(self)
@@ -179,9 +179,9 @@ extension Moo {
 
     struct TestHooks {
 
-        private let moo: Moo
+        private let moo: _Moo
 
-        init(_ moo: Moo) {
+        init(_ moo: _Moo) {
             self.moo = moo
         }
 

@@ -7,6 +7,7 @@
 
 import Foundation
 import SwiftLogger
+import SwiftRoonAPICore
 
 class MooEncoder {
 

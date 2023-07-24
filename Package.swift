@@ -65,6 +65,11 @@ let package = Package(
 
         // Test targets
 
+        .target(
+            name: "TestsCommon",
+            dependencies: ["SwiftRoonAPICore"],
+            path: "SwiftRoonAPICore/Mocks/Generated"
+        ),
         .testTarget(
             name: "SwiftRoonAPICoreTests",
             dependencies: ["SwiftRoonAPICore"],
@@ -77,7 +82,7 @@ let package = Package(
         ),
         .testTarget(
             name: "RoonTransportAPITests",
-            dependencies: ["RoonTransportAPI"],
+            dependencies: ["RoonTransportAPI", "TestsCommon"],
             path: "TransportAPI/Tests"
         ),
     ]

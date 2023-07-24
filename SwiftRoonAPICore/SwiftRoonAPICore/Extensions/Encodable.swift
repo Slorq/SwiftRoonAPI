@@ -9,8 +9,13 @@ import Foundation
 
 public extension Encodable {
 
-    func jsonEncoded() throws -> Data {
-        return try JSONEncoder.default.encode(self)
+    func jsonEncoded() -> Data? {
+        do {
+            return try JSONEncoder.default.encode(self)
+        } catch {
+            assertionFailure("Unhandled error \(error)")
+            return nil
+        }
     }
 
 }

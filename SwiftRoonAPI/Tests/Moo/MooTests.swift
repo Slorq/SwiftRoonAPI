@@ -6,16 +6,17 @@
 //
 
 @testable import SwiftRoonAPI
+import SwiftRoonAPICore
 import XCTest
 
 final class MooTests: XCTestCase {
 
     private var transport: _MooTransportMock!
-    private var moo: Moo!
+    private var moo: _Moo!
 
     override func setUp() {
         transport = _MooTransportMock()
-        moo = Moo(transport: transport)
+        moo = _Moo(transport: transport)
     }
 
     func testConnectingWebSocketResumesTransport() {

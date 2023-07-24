@@ -6,6 +6,7 @@
 //
 
 import Foundation
+import SwiftRoonAPICore
 
 public class SubscriptionMessageHandler {
 

@@ -7,7 +7,8 @@
 
 import Foundation
 
-public struct RoonOutput: Codable, RoonIdentifiable {
+public struct RoonOutput: Codable, RoonIdentifiable, Equatable {
+    public var id: String { outputId }
     let canGroupWithOutputIds: [String]
     let displayName: String
     let outputId: String
@@ -18,14 +19,14 @@ public struct RoonOutput: Codable, RoonIdentifiable {
 
 extension RoonOutput {
 
-    struct SourceControl: Codable {
+    struct SourceControl: Codable, Equatable {
         let controlKey: String
         let displayName: String
         let status: String
         let supportsStandby: Bool
     }
 
-    struct Volume: Codable {
+    struct Volume: Codable, Equatable {
         let hardLimitMax: Double
         let hardLimitMin: Double
         let isMuted: Bool
@@ -36,8 +37,4 @@ extension RoonOutput {
         let type: String
         let value: Double
     }
-}
-
-extension RoonOutput {
-    public var id: String { outputId }
 }
