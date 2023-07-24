@@ -58,9 +58,11 @@ extension RoonCore {
      * @param {string} [opts.control_key] - The <tt>control_key</tt> that identifies the <tt>source_control</tt> that is to be put into standby. If omitted, then all source controls on this output that support standby will be put into standby.
      * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
      */
-    func standBy() async -> Bool {
-        Self.logger.log(level: .error, "Function not implemented: \(#function)")
-        return false
+    public func standBy(output: RoonOutput, options: [String: String]) async -> Bool {
+        var options = options
+        options["output_id"] = output.id
+        let message = await sendRequest(name: TransportRequestName.standBy, body: options.jsonEncoded())
+        return message?.name == .success
     }
 
     /**
