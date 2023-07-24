@@ -323,9 +323,8 @@ extension RoonCore {
         return message?.name == .success
     }
 
-    func zone(byZoneID zoneID: String) async -> Bool {
-        Self.logger.log(level: .error, "Function not implemented: \(#function)")
-        return false
+    public func zone(byZoneID zoneID: String) async -> RoonZone? {
+        await getZones().first(where: { $0.id == zoneID })
     }
 
     func zone(byOutputID outputID: String) async -> Bool {
