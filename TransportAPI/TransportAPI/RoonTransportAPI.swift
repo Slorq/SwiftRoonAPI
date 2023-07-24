@@ -73,9 +73,11 @@ extension RoonCore {
      * @param {string} [opts.control_key] - The <tt>control_key</tt> that identifies the <tt>source_control</tt> that is to have its standby state toggled.
      * @param {RoonApiTransport~resultcallback} [cb] - Called on success or error
      */
-    func toggleStandBy() async -> Bool {
-        Self.logger.log(level: .error, "Function not implemented: \(#function)")
-        return false
+    public func toggleStandBy(output: RoonOutput, options: [String: String]) async -> Bool {
+        var options = options
+        options["output_id"] = output.id
+        let message = await sendRequest(name: TransportRequestName.toggleStandBy, body: options.jsonEncoded())
+        return message?.name == .success
     }
 
     /**

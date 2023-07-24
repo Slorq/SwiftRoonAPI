@@ -25,6 +25,7 @@ struct TransportRequestName {
     static var pauseAll: String { .transport + "/pause_all" }
     static var seek: String { .transport + "/seek" }
     static var standBy: String { .transport + "/standby" }
+    static var toggleStandBy: String { .transport + "/toggle_standby" }
     static var transferZone: String { .transport + "/transfer_zone" }
 
 }
