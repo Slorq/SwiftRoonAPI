@@ -316,9 +316,11 @@ extension RoonCore {
         }
     }
 
-    func playFromHere() async -> Bool {
-        Self.logger.log(level: .error, "Function not implemented: \(#function)")
-        return false
+    public func playFromHere(identifiable: RoonIdentifiable, queueItem: QueueItem) async -> Bool {
+        let request = PlayFromHereRequest(identifiableID: identifiable.id, queueItemID: queueItem.id)
+        let body = request.jsonEncoded()
+        let message = await sendRequest(name: TransportRequestName.playFromHere, body: body)
+        return message?.name == .success
     }
 
     func zone(byZoneID zoneID: String) async -> Bool {

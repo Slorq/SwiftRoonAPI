@@ -28,6 +28,7 @@ struct TransportRequestName {
     static var mute: String { .transport + "/mute" }
     static var muteAll: String { .transport + "/mute_all" }
     static var pauseAll: String { .transport + "/pause_all" }
+    static var playFromHere: String { .transport + "/play_from_here" } 
     static var seek: String { .transport + "/seek" }
     static var standBy: String { .transport + "/standby" }
     static var toggleStandBy: String { .transport + "/toggle_standby" }

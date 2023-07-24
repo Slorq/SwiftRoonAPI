@@ -424,8 +424,8 @@ final class RoonTransportAPITests: XCTestCase {
             completion = receivedCompletion
         }
         let zone = RoonZone.make()
-        let item1 = QueueItem.make(queueItemID: 1)
-        let item2 = QueueItem.make(queueItemID: 2)
+        let item1 = QueueItem.make(id: 1)
+        let item2 = QueueItem.make(id: 2)
 
         let expectedItems: [QueueItem] = [item1, item2]
         core.subscribeQueue(identifiable: zone, maxItems: 10) { items in
@@ -439,6 +439,27 @@ final class RoonTransportAPITests: XCTestCase {
 
         // Then
         XCTAssertEqual(mooMock.subscribeHelperServiceNameRequestNameBodyCompletionCallsCount, 1)
+    }
+
+    func testPlayFromHere() async {
+        // Given
+        mooMock.sendRequestNameBodyContentTypeCompletionClosure = { mooName, body, contentType, completion in
+            let bodyString = body.flatMap { String(data: $0, encoding: .utf8) }
+
+            XCTAssertEqual(mooName, "com.roonlabs.transport:2/play_from_here")
+            XCTAssertEqual(bodyString, "{\"zone_or_output_id\":\"ZoneID-1\",\"queue_item_id\":10}")
+            XCTAssertNil(contentType)
+            completion?(.init(requestID: 1, verb: .request, name: .success))
+        }
+        let zone = RoonZone.make()
+        let queueItem = QueueItem.make()
+
+        // When
+        let response = await core.playFromHere(identifiable: zone, queueItem: queueItem)
+
+        // Then
+        XCTAssertEqual(mooMock.sendRequestNameBodyContentTypeCompletionCallsCount, 1)
+        XCTAssertTrue(response)
     }
 
 }
@@ -529,18 +550,18 @@ private extension RoonOutput {
 private extension QueueItem {
 
     static func make(
+        id: Int = 10,
         imageKey: String? = "ImageKey1",
         length: Int = 300,
         oneLine: DisplayLines = .init(line1: "Line 1", line2: nil, line3: nil),
-        queueItemID: Int = 10,
         threeLines: DisplayLines = .init(line1: "Line 1", line2: "Line 2", line3: "Line 3"),
         twoLines: DisplayLines = .init(line1: "Line 1", line2: "Line 2", line3: nil)
     ) -> QueueItem {
         QueueItem(
+            id: id,
             imageKey: imageKey,
             length: length,
             oneLine: oneLine,
-            queueItemID: queueItemID,
             threeLines: threeLines,
             twoLines: twoLines
         )
