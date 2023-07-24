@@ -300,9 +300,20 @@ extension RoonCore {
         }
     }
 
-    func subscribeQueue() async -> Bool {
-        Self.logger.log(level: .error, "Function not implemented: \(#function)")
-        return false
+    public func subscribeQueue(identifiable: RoonIdentifiable, maxItems: Int, completion: @escaping ([QueueItem]) -> Void) {
+        let body = SubscribeQueueRequest(id: identifiable.id, maxItems: maxItems).jsonEncoded()
+        subscribeHelper(serviceName: .transport,
+                        requestName: TransportSubscriptionName.queue,
+                        body: body) { message in
+                guard let message = message,
+                      let data = message.body,
+                      let response = try? JSONDecoder.default.decode(SubscribeQueueResponse.self, from: data) else {
+                    completion([])
+                    return
+                }
+
+                completion(response.items)
+        }
     }
 
     func playFromHere() async -> Bool {

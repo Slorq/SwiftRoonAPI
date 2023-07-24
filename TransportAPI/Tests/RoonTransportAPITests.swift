@@ -385,7 +385,7 @@ final class RoonTransportAPITests: XCTestCase {
         XCTAssertEqual(mooMock.subscribeHelperServiceNameRequestNameBodyCompletionCallsCount, 1)
     }
 
-    private func testSubscribeOutputs() {
+    func testSubscribeOutputs() {
         // Given
         var completion: ((MooMessage?) -> Void)?
         mooMock.subscribeHelperServiceNameRequestNameBodyCompletionClosure = { serviceName, requestName, body, receivedCompletion in
@@ -411,9 +411,39 @@ final class RoonTransportAPITests: XCTestCase {
         XCTAssertEqual(mooMock.subscribeHelperServiceNameRequestNameBodyCompletionCallsCount, 1)
     }
 
+    func testSubscribeQueue() {
+        // Given
+        var completion: ((MooMessage?) -> Void)?
+        mooMock.subscribeHelperServiceNameRequestNameBodyCompletionClosure = { serviceName, requestName, body, receivedCompletion in
+            let bodyString = body.flatMap { String(data: $0, encoding: .utf8) }
+
+            XCTAssertEqual(serviceName, "com.roonlabs.transport:2")
+            XCTAssertEqual(requestName, "queue")
+            XCTAssertEqual(bodyString?.contains("\"zone_or_output_id\":\"ZoneID-1\""), true)
+            XCTAssertEqual(bodyString?.contains("\"max_item_count\":10"), true)
+            completion = receivedCompletion
+        }
+        let zone = RoonZone.make()
+        let item1 = QueueItem.make(queueItemID: 1)
+        let item2 = QueueItem.make(queueItemID: 2)
+
+        let expectedItems: [QueueItem] = [item1, item2]
+        core.subscribeQueue(identifiable: zone, maxItems: 10) { items in
+            XCTAssertEqual(expectedItems, items)
+        }
+
+        // When
+        let responseOutputs = SubscribeQueueResponse(items: [item1, item2])
+        let mooMessage = MooMessage(requestID: 1, verb: .continue, name: .changed, service: nil, headers: [:], body: responseOutputs.jsonEncoded())
+        completion?(mooMessage)
+
+        // Then
+        XCTAssertEqual(mooMock.subscribeHelperServiceNameRequestNameBodyCompletionCallsCount, 1)
+    }
+
 }
 
-extension RoonCore {
+private extension RoonCore {
 
     static func make(
         coreID: String = "CoreID-1",
@@ -439,7 +469,7 @@ extension RoonCore {
 
 }
 
-extension RoonZone {
+private extension RoonZone {
 
     static func make(
         displayName: String = "Zone Name",
@@ -481,7 +511,7 @@ extension RoonZone {
 
 }
 
-extension RoonOutput {
+private extension RoonOutput {
 
     static func make(outputID: String = "OutputID-1") -> RoonOutput {
         RoonOutput(
@@ -491,6 +521,28 @@ extension RoonOutput {
             sourceControls: [],
             volume: nil,
             zoneId: "ZoneID-1"
+        )
+    }
+
+}
+
+private extension QueueItem {
+
+    static func make(
+        imageKey: String? = "ImageKey1",
+        length: Int = 300,
+        oneLine: DisplayLines = .init(line1: "Line 1", line2: nil, line3: nil),
+        queueItemID: Int = 10,
+        threeLines: DisplayLines = .init(line1: "Line 1", line2: "Line 2", line3: "Line 3"),
+        twoLines: DisplayLines = .init(line1: "Line 1", line2: "Line 2", line3: nil)
+    ) -> QueueItem {
+        QueueItem(
+            imageKey: imageKey,
+            length: length,
+            oneLine: oneLine,
+            queueItemID: queueItemID,
+            threeLines: threeLines,
+            twoLines: twoLines
         )
     }
 

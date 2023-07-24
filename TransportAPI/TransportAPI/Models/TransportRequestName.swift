@@ -11,6 +11,7 @@ import SwiftRoonAPICore
 struct TransportSubscriptionName {
 
     static var outputs: String { "outputs" }
+    static var queue: String { "queue" }
     static var zones: String { "zones" }
 
 }

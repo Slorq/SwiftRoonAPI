@@ -46,13 +46,3 @@ public extension RoonZone {
     }
 
 }
-
-public extension RoonZone.NowPlaying {
-
-    struct DisplayLines: Codable, Equatable {
-        public let line1: String?
-        public let line2: String?
-        public let line3: String?
-    }
-
-}
