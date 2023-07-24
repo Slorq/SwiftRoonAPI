@@ -10,6 +10,7 @@ import SwiftRoonAPICore
 
 struct TransportSubscriptionName {
 
+    static var outputs: String { "outputs" }
     static var zones: String { "zones" }
 
 }

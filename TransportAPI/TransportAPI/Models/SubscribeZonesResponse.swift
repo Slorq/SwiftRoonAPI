@@ -8,9 +8,11 @@
 import Foundation
 
 struct SubscribeZonesResponse: Codable {
+
     let zones: [RoonZone]?
     let zonesAdded: [RoonZone]?
     let zonesChanged: [RoonZone]?
     let zonesRemoved: [String]?
     let zonesSeekChanged: [ZoneSeekChanged]?
+    
 }

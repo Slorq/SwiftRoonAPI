@@ -245,7 +245,7 @@ extension RoonCore {
         return response.outputs
     }
 
-    public func subscribeZones(completion: @escaping (([RoonZone]) -> Void)) {
+    public func subscribeZones(completion: @escaping ([RoonZone]) -> Void) {
         var zones: [String: RoonZone] = [:]
         subscribeHelper(serviceName: .transport,
                         requestName: TransportSubscriptionName.zones) { message in
@@ -286,9 +286,18 @@ extension RoonCore {
         }
     }
 
-    func subscribeOutputs() async -> Bool {
-        Self.logger.log(level: .error, "Function not implemented: \(#function)")
-        return false
+    public func subscribeOutputs(completion: @escaping ([RoonOutput]) -> Void) {
+        subscribeHelper(serviceName: .transport,
+                        requestName: TransportSubscriptionName.outputs) { message in
+            guard let message = message,
+                  let data = message.body,
+                  let response = try? JSONDecoder.fromSnakeCase.decode(SubscribeOutputsResponse.self, from: data) else {
+                completion([])
+                return
+            }
+
+            completion(response.outputs)
+        }
     }
 
     func subscribeQueue() async -> Bool {

@@ -385,6 +385,32 @@ final class RoonTransportAPITests: XCTestCase {
         XCTAssertEqual(mooMock.subscribeHelperServiceNameRequestNameBodyCompletionCallsCount, 1)
     }
 
+    private func testSubscribeOutputs() {
+        // Given
+        var completion: ((MooMessage?) -> Void)?
+        mooMock.subscribeHelperServiceNameRequestNameBodyCompletionClosure = { serviceName, requestName, body, receivedCompletion in
+            XCTAssertEqual(serviceName, "com.roonlabs.transport:2")
+            XCTAssertEqual(requestName, "outputs")
+            XCTAssertNil(body)
+            completion = receivedCompletion
+        }
+        let output1 = RoonOutput.make(outputID: "OutputID-1")
+        let output2 = RoonOutput.make(outputID: "OutputID-2")
+
+        let expectedOutputs: [RoonOutput] = [output1, output2]
+        core.subscribeOutputs() { outputs in
+            XCTAssertEqual(expectedOutputs, outputs)
+        }
+
+        // When
+        let responseOutputs = SubscribeOutputsResponse(outputs: [output1, output2])
+        let mooMessage = MooMessage(requestID: 1, verb: .continue, name: .changed, service: nil, headers: [:], body: responseOutputs.jsonEncoded())
+        completion?(mooMessage)
+
+        // Then
+        XCTAssertEqual(mooMock.subscribeHelperServiceNameRequestNameBodyCompletionCallsCount, 1)
+    }
+
 }
 
 extension RoonCore {
