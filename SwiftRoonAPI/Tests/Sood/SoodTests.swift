@@ -108,6 +108,162 @@ final class SoodTests: XCTestCase {
         XCTAssertEqual(unicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[0].tag, 3)
     }
 
+    func testUnicastSocketOnErrorClosesSocket() {
+        // Given
+        InterfacesProviderMock.interfaces = [
+            .init(ip: "127.0.0.1", netmask: "255.255.255.0"),
+        ]
+        sood.start(nil)
+
+        // When
+        sood.testHooks.unicast.sendSocket?.onError?(NSError(domain: "Test", code: 1))
+
+        // Then
+        XCTAssertEqual(sood.testHooks.unicast.sendSocket?.testHooks.socket.asMock.closeCalled, true)
+    }
+
+    func testUnicastSocketOnCloseRemovesSocket() {
+        // Given
+        InterfacesProviderMock.interfaces = [
+            .init(ip: "127.0.0.1", netmask: "255.255.255.0"),
+        ]
+        sood.start(nil)
+
+        // When
+        sood.testHooks.unicast.sendSocket?.onClose?()
+
+        // Then
+        XCTAssertNil(sood.testHooks.unicast.sendSocket)
+    }
+
+    func testUnicastSocketOnMessageNotifiesMessage() {
+        // Given
+        InterfacesProviderMock.interfaces = [
+            .init(ip: "127.0.0.1", netmask: "255.255.255.0"),
+        ]
+        sood.start(nil)
+        let requestMessage = MessageInfo(address: "127.0.0.1", port: 9300)
+        let responseData = "SOOD\u{02}Q\u{04}_tid\u{00}$2D0712E3-CB9E-44C4-8E7B-E8C0769534E3\u{10}query_service_id\u{00}$00720724-5143-4a9b-abac-0e50cba674bb".data(using: .utf8)!
+
+        let expectation = expectation(description: "On message should be called")
+        sood.onMessage = { message in
+            XCTAssertEqual(message, .init(props: .init(tid: "2D0712E3-CB9E-44C4-8E7B-E8C0769534E3"),
+                                          from: .init(ip: "127.0.0.1", port: 9300),
+                                          type: "Q"))
+            expectation.fulfill()
+        }
+
+        // When
+        sood.testHooks.unicast.sendSocket?.onMessage?(responseData, requestMessage)
+
+        // Then
+        waitForExpectations(timeout: 0.1)
+    }
+
+    func testMulticastSendSocketOnErrorClosesSocket() {
+        // Given
+        InterfacesProviderMock.interfaces = [
+            .init(ip: "127.0.0.1", netmask: "255.255.255.0"),
+        ]
+        sood.start(nil)
+
+        // When
+        sood.testHooks.multicast.first?.value.sendSocket?.onError?(NSError(domain: "Test", code: 1))
+
+        // Then
+        XCTAssertEqual(sood.testHooks.multicast.first?.value.sendSocket?.testHooks.socket.asMock.closeCalled, true)
+    }
+
+    func testMulticastSendSocketOnCloseRemovesSocket() {
+        // Given
+        InterfacesProviderMock.interfaces = [
+            .init(ip: "127.0.0.1", netmask: "255.255.255.0"),
+        ]
+        sood.start(nil)
+
+        // When
+        sood.testHooks.multicast.first?.value.sendSocket?.onClose?()
+
+        // Then
+        XCTAssertNil(sood.testHooks.multicast.first?.value.sendSocket)
+    }
+
+    func testMulticastSendSocketOnMessageNotifiesMessage() {
+        // Given
+        InterfacesProviderMock.interfaces = [
+            .init(ip: "127.0.0.1", netmask: "255.255.255.0"),
+        ]
+        sood.start(nil)
+        let requestMessage = MessageInfo(address: "127.0.0.1", port: 9300)
+        let responseData = "SOOD\u{02}Q\u{04}_tid\u{00}$2D0712E3-CB9E-44C4-8E7B-E8C0769534E3\u{10}query_service_id\u{00}$00720724-5143-4a9b-abac-0e50cba674bb".data(using: .utf8)!
+
+        let expectation = expectation(description: "On message should be called")
+        sood.onMessage = { message in
+            XCTAssertEqual(message, .init(props: .init(tid: "2D0712E3-CB9E-44C4-8E7B-E8C0769534E3"),
+                                          from: .init(ip: "127.0.0.1", port: 9300),
+                                          type: "Q"))
+            expectation.fulfill()
+        }
+
+        // When
+        sood.testHooks.multicast.first?.value.sendSocket?.onMessage?(responseData, requestMessage)
+
+        // Then
+        waitForExpectations(timeout: 0.1)
+    }
+
+    func testMulticastRecieveSocketOnErrorClosesSocket() {
+        // Given
+        InterfacesProviderMock.interfaces = [
+            .init(ip: "127.0.0.1", netmask: "255.255.255.0"),
+        ]
+        sood.start(nil)
+
+        // When
+        sood.testHooks.multicast.first?.value.receiveSocket?.onError?(NSError(domain: "Test", code: 1))
+
+        // Then
+        XCTAssertEqual(sood.testHooks.multicast.first?.value.receiveSocket?.testHooks.socket.asMock.closeCalled, true)
+    }
+
+    func testMulticastReceiveSocketOnCloseRemovesSocket() {
+        // Given
+        InterfacesProviderMock.interfaces = [
+            .init(ip: "127.0.0.1", netmask: "255.255.255.0"),
+        ]
+        sood.start(nil)
+
+        // When
+        sood.testHooks.multicast.first?.value.receiveSocket?.onClose?()
+
+        // Then
+        XCTAssertNil(sood.testHooks.multicast.first?.value.receiveSocket)
+    }
+
+    func testMulticastReceiveSocketOnMessageNotifiesMessage() {
+        // Given
+        InterfacesProviderMock.interfaces = [
+            .init(ip: "127.0.0.1", netmask: "255.255.255.0"),
+        ]
+        sood.start(nil)
+        let requestMessage = MessageInfo(address: "127.0.0.1", port: 9300)
+        let responseData = "SOOD\u{02}Q\u{04}_tid\u{00}$2D0712E3-CB9E-44C4-8E7B-E8C0769534E3\u{10}query_service_id\u{00}$00720724-5143-4a9b-abac-0e50cba674bb".data(using: .utf8)!
+
+        let expectation = expectation(description: "On message should be called")
+        sood.onMessage = { message in
+            XCTAssertEqual(message, .init(props: .init(tid: "2D0712E3-CB9E-44C4-8E7B-E8C0769534E3"),
+                                          from: .init(ip: "127.0.0.1", port: 9300),
+                                          type: "Q"))
+            expectation.fulfill()
+        }
+
+        // When
+        sood.testHooks.multicast.first?.value.receiveSocket?.onMessage?(responseData, requestMessage)
+
+        // Then
+        waitForExpectations(timeout: 0.1)
+    }
+
 }
 
 extension _AsyncSocket {
