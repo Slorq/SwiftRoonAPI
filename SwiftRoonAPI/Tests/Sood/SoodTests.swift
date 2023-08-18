@@ -68,6 +68,46 @@ final class SoodTests: XCTestCase {
         waitForExpectations(timeout: 0.5)
     }
 
+    func testQueryServiceIDSendsExpectedMessage() throws {
+        // Given
+        InterfacesProviderMock.interfaces = [
+            .init(ip: "127.0.0.1", netmask: "255.255.255.0"),
+        ]
+        sood.start(nil)
+
+        // When
+        sood.query(serviceId: "ServiceID-1")
+
+        // Then
+        let expectedPrefixData = "SOOD\u{02}Q".data(using: .utf8)!
+        let expectedQueryServiceIDData = "\u{10}query_service_id\0\u{0B}ServiceID-1".data(using: .utf8)!
+        XCTAssertEqual(sood.testHooks.multicast.count, 1)
+        let multicastSocket = try XCTUnwrap(sood.testHooks.multicast.first?.value.sendSocket?.testHooks.socket.asMock)
+        XCTAssertEqual(multicastSocket.sendToHostPortWithTimeoutTagCallsCount, 2)
+        XCTAssertTrue(multicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[0].data.contains(expectedPrefixData))
+        XCTAssertTrue(multicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[0].data.contains(expectedQueryServiceIDData))
+        XCTAssertEqual(multicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[0].host, "239.255.90.90")
+        XCTAssertEqual(multicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[0].port, 9003)
+        XCTAssertEqual(multicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[0].timeout, 10)
+        XCTAssertEqual(multicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[0].tag, 1)
+
+        XCTAssertTrue(multicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[1].data.contains(expectedPrefixData))
+        XCTAssertTrue(multicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[1].data.contains(expectedQueryServiceIDData))
+        XCTAssertEqual(multicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[1].host, "127.0.0.255")
+        XCTAssertEqual(multicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[1].port, 9003)
+        XCTAssertEqual(multicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[1].timeout, 10)
+        XCTAssertEqual(multicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[1].tag, 2)
+        let unicastSocket = try XCTUnwrap(sood.testHooks.unicast.sendSocket?.testHooks.socket.asMock)
+        XCTAssertEqual(unicastSocket.sendToHostPortWithTimeoutTagCallsCount, 1)
+
+        XCTAssertTrue(unicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[0].data.contains(expectedPrefixData))
+        XCTAssertTrue(unicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[0].data.contains(expectedQueryServiceIDData))
+        XCTAssertEqual(unicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[0].host, "239.255.90.90")
+        XCTAssertEqual(unicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[0].port, 9003)
+        XCTAssertEqual(unicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[0].timeout, 10)
+        XCTAssertEqual(unicastSocket.sendToHostPortWithTimeoutTagReceivedInvocations[0].tag, 3)
+    }
+
 }
 
 extension _AsyncSocket {
