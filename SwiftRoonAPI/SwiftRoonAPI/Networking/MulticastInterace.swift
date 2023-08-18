@@ -8,6 +8,7 @@
 import Foundation
 
 class MulticastInterface {
+    
     var sendSocket: SocketFacade?
     var receiveSocket: SocketFacade?
     var interfaceSequence: Int

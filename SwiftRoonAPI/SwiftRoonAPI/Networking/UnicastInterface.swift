@@ -8,11 +8,10 @@
 import Foundation
 
 class UnicastInterface {
+    
     var sendSocket: SocketFacade?
-    let interfaceSequence: Int
 
-    init(sendSocket: SocketFacade? = nil, interfaceSequence: Int) {
+    init(sendSocket: SocketFacade? = nil) {
         self.sendSocket = sendSocket
-        self.interfaceSequence = interfaceSequence
     }
 }

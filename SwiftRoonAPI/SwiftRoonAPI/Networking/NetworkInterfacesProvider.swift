@@ -10,7 +10,13 @@ import Foundation
 import SystemConfiguration
 #endif
 
-struct NetworkInterfacesProvider {
+protocol _NetworkInterfacesProvider {
+
+    static var interfaces: [NetworkInterface] { get }
+
+}
+
+struct NetworkInterfacesProvider: _NetworkInterfacesProvider {
 
     static var interfaces: [NetworkInterface] {
         #if os(watchOS)
