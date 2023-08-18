@@ -17,6 +17,7 @@ class Sood: NSObject {
     private static let soodPort: UInt16 = 9003
 
     private let interfacesProvider: _NetworkInterfacesProvider.Type
+    private let socketFactory: _SocketFactory
     private let logger = Logger()
 
     private let parser = SoodMessageParser()
@@ -28,8 +29,10 @@ class Sood: NSObject {
     var onMessage: ((SoodMessage) -> Void)?
     var onNetwork: (() -> Void)?
 
-    init(interfacesProvider: _NetworkInterfacesProvider.Type = NetworkInterfacesProvider.self) {
+    init(interfacesProvider: _NetworkInterfacesProvider.Type = NetworkInterfacesProvider.self,
+         socketFactory: _SocketFactory = SocketFactory()) {
         self.interfacesProvider = interfacesProvider
+        self.socketFactory = socketFactory
     }
 
     func start(_ onStart: (() -> Void)?) {
@@ -104,7 +107,9 @@ class Sood: NSObject {
         if unicast.sendSocket == nil {
             logger.log("Creating unicast")
             do {
-                let socket = try SocketFacade(port: 0, enableBroadcast: true)
+                let socket = try SocketFacade(port: 0,
+                                              enableBroadcast: true,
+                                              socket: socketFactory.make())
                 socket.onError = { [weak socket] error in
                     socket?.close()
                 }
@@ -142,7 +147,8 @@ class Sood: NSObject {
                 let socket = try SocketFacade(port: Sood.soodPort,
                                               enableReusePort: true,
                                               joinMulticastGroup: Sood.soodMulticastIP,
-                                              onInterface: netInfo.ip)
+                                              onInterface: netInfo.ip,
+                                              socket: socketFactory.make())
                 socket.onError = { [weak socket] error in
                     socket?.close()
                 }
@@ -164,8 +170,9 @@ class Sood: NSObject {
             interface.broadcast = netInfo.broadcast
             do {
                 let socket = try SocketFacade(port: 0,
-                                        address: netInfo.ip,
-                                        enableBroadcast: true)
+                                              address: netInfo.ip,
+                                              enableBroadcast: true,
+                                              socket: socketFactory.make())
                 socket.onError = { [weak socket] error in
                     socket?.close()
                 }

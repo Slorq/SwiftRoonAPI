@@ -43,7 +43,7 @@ class SocketFacade: NSObject {
          enableReusePort: Bool = false,
          joinMulticastGroup multicastGroup: String? = nil,
          onInterface interface: String? = nil,
-         socket: _AsyncSocket = GCDAsyncUdpSocket()) throws {
+         socket: _AsyncSocket) throws {
         do {
             self.socket = socket
             super.init()
@@ -101,3 +101,25 @@ extension SocketFacade: GCDAsyncUdpSocketDelegate {
         onClose?()
     }
 }
+
+#if DEBUG
+extension SocketFacade {
+
+    var testHooks: TestHooks {
+        .init(socketFacade: self)
+    }
+
+    struct TestHooks {
+
+        private let socketFacade: SocketFacade
+
+        init(socketFacade: SocketFacade) {
+            self.socketFacade = socketFacade
+        }
+
+        var socket: _AsyncSocket { socketFacade.socket }
+
+    }
+
+}
+#endif
