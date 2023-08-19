@@ -31,7 +31,7 @@ public class RoonAPI: NSObject {
     private var isPaired = false
     fileprivate var options: RoonOptions
     private var pairedCore: RoonCore?
-    private var pairingService: PairingServiceRegistry?
+    fileprivate var pairingService: PairingServiceRegistry?
     private var periodicScanSubscription: AnyCancellable?
     private var roonSettings = RoonSettings()
     private var scanCount = 0
@@ -160,7 +160,7 @@ public class RoonAPI: NSObject {
             })
         }
 
-        providedServices.append(.init(services: [
+        providedServices.append(ServiceRegistry(services: [
             registerService(serviceName: "com.roonlabs.ping:1", specs: .init(methods: [
                 "ping": { moo, request in
                     moo.sendComplete(message: request)
@@ -185,8 +185,8 @@ public class RoonAPI: NSObject {
         logger.log(level: .info, "Registering service \(serviceName)")
         let registeredService = RegisteredService()
 
-        specs.subscriptions.forEach { s in
-            let subname = s.subscribeName
+        specs.subscriptions.forEach { subscription in
+            let subname = subscription.subscribeName
             registeredService.subservices[subname] = [:]
             specs.methods[subname] = { moo, request in
                 guard let body = request.body,
@@ -201,14 +201,14 @@ public class RoonAPI: NSObject {
                     originalSendComplete(moo, name, body, message)
                     registeredService.subservices[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = nil
                 }
-                s.start(moo, request)
+                subscription.start(moo, request)
                 if registeredService.subservices[subname]?[moo.mooID] == nil {
                     registeredService.subservices[subname]?[moo.mooID] = [:]
                 }
                 registeredService.subservices[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = subscriptionMessageHandler
             }
 
-            specs.methods[s.unsubscribeName] = { moo, request in
+            specs.methods[subscription.unsubscribeName] = { moo, request in
                 guard let body = request.body,
                       let subscriptionBody = try? JSONDecoder.default.decode(SubscriptionBody.self, from: body) else {
                     assertionFailure("Unable to decode subscriptionBody")
@@ -216,7 +216,7 @@ public class RoonAPI: NSObject {
                 }
 
                 registeredService.subservices[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = nil
-                s.end?()
+                subscription.end?()
                 moo.sendComplete(.unsubscribed, message: request)
             }
         }
@@ -415,15 +415,20 @@ enum RoonAPIError: Error, Equatable {
 }
 
 #if DEBUG
-struct TestHooks {
+extension RoonAPI {
 
-    private let roonAPI: RoonAPI
+    var testHooks: TestHooks { .init(roonAPI: self) }
 
-    init(roonAPI: RoonAPI) {
-        self.roonAPI = roonAPI
+    struct TestHooks {
+
+        private let roonAPI: RoonAPI
+
+        init(roonAPI: RoonAPI) {
+            self.roonAPI = roonAPI
+        }
+
+        var pairingService: PairingServiceRegistry? { roonAPI.pairingService }
+
     }
-
-    var options: RoonOptions { roonAPI.options }
-
 }
 #endif

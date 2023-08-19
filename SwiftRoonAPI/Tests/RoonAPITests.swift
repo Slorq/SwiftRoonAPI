@@ -26,23 +26,6 @@ final class SwiftRoonAPITests: XCTestCase {
         super.setUp()
     }
 
-    func testOnMessageWhenOnSoodMessage() {
-        // Given
-        let soodMessage = SoodMessage(props: .init(), from: .init(port: 9300), type: "Q")
-
-        let expectation = expectation(description: "onMessage should be called")
-        sood.onMessage = { receivedMessage in
-            XCTAssertEqual(receivedMessage, soodMessage)
-            expectation.fulfill()
-        }
-
-        // When
-        sood.onMessage?(soodMessage)
-
-        // Then
-        waitForExpectations(timeout: 0.1)
-    }
-
     func testSoodQueryWhenStartDiscoveryIsCalled() {
         // Given
         sood.startClosure = { closure in closure?() }
@@ -52,6 +35,21 @@ final class SwiftRoonAPITests: XCTestCase {
 
         // Then
         XCTAssertTrue(sood.queryServiceIdCalled)
+    }
+
+    func testSoodStartsOnlyOnceOnStartDiscovery() {
+        // Given
+        sood.startClosure = { [weak self] closure in
+            self?.sood.underlyingIsStarted = true
+            closure?()
+        }
+
+        // When
+        roonAPI.startDiscovery()
+        roonAPI.startDiscovery()
+
+        // Then
+        XCTAssertEqual(sood.queryServiceIdCallsCount, 1)
     }
 
     func testInitRequiredServicesWithoutCorePairedOrFoundThrowsError() {
@@ -80,6 +78,17 @@ final class SwiftRoonAPITests: XCTestCase {
             // Then
             XCTAssertEqual(error as? RoonAPIError, RoonAPIError.unableToInitServices(details: "Roon Extensions options has required or optional services, but has neither corePaired nor coreFound."))
         }
+    }
+
+    func testPairingServiceIsInitializedOnInitServicesWhenCorePairedExists() throws {
+        // Given
+        roonAPI.corePaired = { core in }
+
+        // When
+        try roonAPI.initServices()
+
+        // Then
+        XCTAssertNotNil(roonAPI.testHooks.pairingService)
     }
 
 }
