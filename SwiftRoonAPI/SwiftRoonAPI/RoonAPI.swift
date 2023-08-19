@@ -29,9 +29,9 @@ public class RoonAPI: NSObject {
     private let logger = Logger()
     private var extensionRegInfo: RoonExtensionRegInfo
     private var isPaired = false
-    fileprivate var options: RoonOptions
+    private var options: RoonOptions
     private var pairedCore: RoonCore?
-    fileprivate var pairingService: PairingServiceRegistry?
+    private var pairingService: PairingServiceRegistry?
     private var periodicScanSubscription: AnyCancellable?
     private var roonSettings = RoonSettings()
     private var scanCount = 0
@@ -428,6 +428,7 @@ extension RoonAPI {
         }
 
         var pairingService: PairingServiceRegistry? { roonAPI.pairingService }
+        var soodConnections: [String: Moo] { roonAPI.soodConnections }
 
     }
 }
