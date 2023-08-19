@@ -35,10 +35,10 @@ public class RoonAPI: NSObject {
     private var periodicScanSubscription: AnyCancellable?
     private var roonSettings = RoonSettings()
     private var scanCount = 0
-    private var serviceRequestHandlers: [String: (Moo, MooMessage?) -> Void] = [:]
+    private var serviceRequestHandlers: [String: (_Moo, MooMessage?) -> Void] = [:]
     private var servicesOpts: ([ServiceRegistry], [ServiceRegistry], [ServiceRegistry])?
     private var sood: _Sood
-    private var soodConnections: [String: Moo] = [:]
+    private var soodConnections: [String: _Moo] = [:]
     public var coreFound: RoonCoreCompletionHandler?
     public var coreLost: RoonCoreCompletionHandler?
     public var corePaired: RoonCoreCompletionHandler?
@@ -89,17 +89,17 @@ public class RoonAPI: NSObject {
         }
 
         if corePaired != nil {
-            let onPairingStart: (Moo, MooMessage) -> Void = { [weak self] moo, request in
+            let onPairingStart: (_Moo, MooMessage) -> Void = { [weak self] moo, request in
                 let pairedCore = (self?.pairedCore?.coreID).map { PairedCore(coreID: $0) }
                 let body = try? pairedCore?.jsonEncoded()
                 moo.sendContinue(MooName.subscribed, body: body, message: request, completion: nil)
             }
-            let getPairing: (Moo, MooMessage) -> Void = { [weak self] moo, request in
+            let getPairing: (_Moo, MooMessage) -> Void = { [weak self] moo, request in
                 let pairedCore = (self?.pairedCore?.coreID).map { PairedCore(coreID: $0) }
                 let body = try? pairedCore?.jsonEncoded()
                 moo.sendComplete(MooName.success, body: body, message: request, completion: nil)
             }
-            let pair: (Moo, MooMessage) -> Void = { [weak self] moo, request in
+            let pair: (_Moo, MooMessage) -> Void = { [weak self] moo, request in
                 guard let self,
                       let body = request.body,
                       let core = try? JSONDecoder.default.decode(RoonCore.self, from: body) else {
@@ -295,10 +295,10 @@ public class RoonAPI: NSObject {
     private func wsConnect(hostIP: String,
                            httpPort: UInt16,
                            onClose: @escaping () -> Void,
-                           onError: @escaping (Error) -> Void) -> Moo {
+                           onError: @escaping (Error) -> Void) -> _Moo {
         logger.log("Sood WS Connect \(hostIP):\(httpPort)")
         let transport = try! MooTransport(host: hostIP, port: httpPort)
-        let moo = _Moo(transport: transport)
+        let moo = Moo(transport: transport)
 
         moo.onOpen = { [weak self] moo in
             guard let self else { return }
@@ -361,7 +361,7 @@ public class RoonAPI: NSObject {
         return moo
     }
 
-    private func evRegistered(moo: Moo, message: MooMessage?) {
+    private func evRegistered(moo: _Moo, message: MooMessage?) {
         if message == nil {
             // Lost connection
             if let core = moo.core {
@@ -428,7 +428,7 @@ extension RoonAPI {
         }
 
         var pairingService: PairingServiceRegistry? { roonAPI.pairingService }
-        var soodConnections: [String: Moo] { roonAPI.soodConnections }
+        var soodConnections: [String: _Moo] { roonAPI.soodConnections }
 
     }
 }

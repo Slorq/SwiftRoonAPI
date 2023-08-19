@@ -12,11 +12,11 @@ import XCTest
 final class MooTests: XCTestCase {
 
     private var transport: _MooTransportMock!
-    private var moo: _Moo!
+    private var moo: Moo!
 
     override func setUp() {
         transport = _MooTransportMock()
-        moo = _Moo(transport: transport)
+        moo = Moo(transport: transport)
     }
 
     func testConnectingWebSocketResumesTransport() {

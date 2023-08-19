@@ -10,7 +10,7 @@ import SwiftRoonAPICore
 
 struct RegisteredServiceHandler {
 
-    static func sendContinueAll(subservices: RegisteredSubservices, moo: Moo, subservice: String, name: String, body: Data?) {
+    static func sendContinueAll(subservices: RegisteredSubservices, moo: _Moo, subservice: String, name: String, body: Data?) {
         guard let subservice = subservices[subservice] else {
             assertionFailure("Couldn't find subtype \(subservice)")
             return
