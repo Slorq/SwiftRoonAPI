@@ -9,9 +9,20 @@ import Combine
 import Foundation
 import Network
 import SwiftLogger
+import SwiftRoonAPICore
 import SystemConfiguration
 
-class Sood: NSObject {
+protocol _Sood: AutoMockable {
+
+    var isStarted: Bool { get }
+    var onMessage: ((SoodMessage) -> Void)? { get set }
+    var onNetwork: (() -> Void)? { get set }
+
+    func query(serviceId: String)
+    func start(_ onStart: (() -> Void)?)
+}
+
+class Sood: NSObject, _Sood {
 
     private static let soodMulticastIP = "239.255.90.90"
     private static let soodPort: UInt16 = 9003
@@ -26,6 +37,8 @@ class Sood: NSObject {
     private var multicast: [String: MulticastInterface] = [:]
     private var unicast: UnicastInterface = .init(sendSocket: nil)
 
+    private(set) var isStarted = false
+
     var onMessage: ((SoodMessage) -> Void)?
     var onNetwork: (() -> Void)?
 
@@ -36,6 +49,7 @@ class Sood: NSObject {
     }
 
     func start(_ onStart: (() -> Void)?) {
+        isStarted = true
         interfaceTimer = Timer.publish(every: 5, on: .current, in: .default)
             .autoconnect()
             .sink { [weak self] _ in self?.initSocket(onStart) }

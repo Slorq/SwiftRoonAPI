@@ -29,7 +29,7 @@ public class RoonAPI: NSObject {
     private let logger = Logger()
     private var extensionRegInfo: RoonExtensionRegInfo
     private var isPaired = false
-    private var options: RoonOptions
+    fileprivate var options: RoonOptions
     private var pairedCore: RoonCore?
     private var pairingService: PairingServiceRegistry?
     private var periodicScanSubscription: AnyCancellable?
@@ -37,7 +37,7 @@ public class RoonAPI: NSObject {
     private var scanCount = 0
     private var serviceRequestHandlers: [String: (Moo, MooMessage?) -> Void] = [:]
     private var servicesOpts: ([ServiceRegistry], [ServiceRegistry], [ServiceRegistry])?
-    private var sood: Sood?
+    private var sood: _Sood
     private var soodConnections: [String: Moo] = [:]
     public var coreFound: RoonCoreCompletionHandler?
     public var coreLost: RoonCoreCompletionHandler?
@@ -45,24 +45,27 @@ public class RoonAPI: NSObject {
     public var coreUnpaired: RoonCoreCompletionHandler?
     public var onError: RoonErrorCompletionHandler?
 
-    public init(options: RoonOptions) {
+    public convenience init(options: RoonOptions) {
+        self.init(options: options, sood: Sood())
+    }
+
+    init(options: RoonOptions, sood: _Sood) {
         self.options = options
         self.extensionRegInfo = .init(options: options)
+        self.sood = sood
 
         super.init()
+        self.sood.onMessage = { [weak self] in self?.onSoodMessage($0) }
+        self.sood.onNetwork = { [weak self] in self?.onSoodNetwork() }
     }
 
     public func startDiscovery() {
-        guard sood == nil else {
+        guard !sood.isStarted else {
             logger.log(level: .warning, "Discovery has already been started")
             return
         }
 
         logger.log(level: .info, "Starting discovery")
-        let sood = Sood()
-        self.sood = sood
-        sood.onMessage = { [weak self] in self?.onSoodMessage($0) }
-        sood.onNetwork = { [weak self] in self?.onSoodNetwork() }
         sood.start { [weak self] in self?.onSoodStart() }
     }
 
@@ -245,12 +248,12 @@ public class RoonAPI: NSObject {
         logger.log("Periodic scan \(scanCount)")
         guard !isPaired else { return }
         guard scanCount < 0 || scanCount % 6 == 0 else { return }
-        sood?.query(serviceId: roonServiceID)
+        sood.query(serviceId: roonServiceID)
     }
 
     private func onSoodStart() {
         logger.log("Starting sood")
-        sood?.query(serviceId: roonServiceID)
+        sood.query(serviceId: roonServiceID)
         periodicScanSubscription = Timer.publish(every: 10, on: .current, in: .default)
             .autoconnect()
             .receive(on: RunLoop.main)
@@ -286,7 +289,7 @@ public class RoonAPI: NSObject {
 
     private func onSoodNetwork() {
         logger.log("Sood on network")
-        sood?.query(serviceId: roonServiceID)
+        sood.query(serviceId: roonServiceID)
     }
 
     private func wsConnect(hostIP: String,
@@ -407,6 +410,20 @@ extension URL {
     }()
 }
 
-enum RoonAPIError: Error {
+enum RoonAPIError: Error, Equatable {
     case unableToInitServices(details: String)
 }
+
+#if DEBUG
+struct TestHooks {
+
+    private let roonAPI: RoonAPI
+
+    init(roonAPI: RoonAPI) {
+        self.roonAPI = roonAPI
+    }
+
+    var options: RoonOptions { roonAPI.options }
+
+}
+#endif
