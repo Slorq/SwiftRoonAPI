@@ -12,17 +12,17 @@ final class SwiftRoonAPITests: XCTestCase {
 
     private var sood: _SoodMock!
     private var roonAPI: RoonAPI!
-    private let options: RoonOptions = .init(displayName: "DisplayName",
-                                             displayVersion: "DisplayVersion",
-                                             email: "email@test.com",
-                                             extensionID: "ExtensionID",
-                                             publisher: "PublisherName",
-                                             website: "www.website.com")
+    private let details: RoonExtensionDetails = .init(displayName: "DisplayName",
+                                                      displayVersion: "DisplayVersion",
+                                                      email: "email@test.com",
+                                                      extensionID: "ExtensionID",
+                                                      publisher: "PublisherName",
+                                                      website: "www.website.com")
 
     override func setUp() {
         sood = _SoodMock()
         sood.underlyingIsStarted = false
-        roonAPI = RoonAPI(options: options, sood: sood)
+        roonAPI = RoonAPI(details: details, sood: sood)
         super.setUp()
     }
 
