@@ -15,21 +15,14 @@ private let roonServiceID = "00720724-5143-4a9b-abac-0e50cba674bb"
 
 public typealias RoonCore = SwiftRoonAPICore.RoonCore
 
-struct RoonServices {
-    let required: [RoonServiceName]
-    let optional: [RoonServiceName]
-    let provided: [RoonServiceName]
-}
-
-public class RoonAPI: NSObject {
+public final class RoonAPI {
 
     public typealias RoonCoreCompletionHandler = (RoonCore) -> Void
     public typealias RoonErrorCompletionHandler = (Error) -> Void
 
     private let logger = Logger()
-    private var extensionRegInfo: RoonExtensionRegInfo
+    private var extensionRegInfo: RoonExtensionDetails
     private var isPaired = false
-    private var options: RoonOptions
     private var pairedCore: RoonCore?
     private var pairingService: PairingServiceRegistry?
     private var periodicScanSubscription: AnyCancellable?
@@ -50,11 +43,8 @@ public class RoonAPI: NSObject {
     }
 
     init(options: RoonOptions, sood: _Sood) {
-        self.options = options
-        self.extensionRegInfo = .init(options: options)
+        self.extensionRegInfo = RoonExtensionDetails(options: options)
         self.sood = sood
-
-        super.init()
         self.sood.onMessage = { [weak self] in self?.onSoodMessage($0) }
         self.sood.onNetwork = { [weak self] in self?.onSoodNetwork() }
     }
@@ -77,10 +67,6 @@ public class RoonAPI: NSObject {
                               requiredServices: requiredServices,
                               providedServices: providedServices)
         )
-
-        let optionalServices = optionalServices
-        let requiredServices = requiredServices
-        var providedServices = providedServices
 
         if !requiredServices.isEmpty || !optionalServices.isEmpty {
             if corePaired == nil && coreFound == nil {
@@ -160,6 +146,7 @@ public class RoonAPI: NSObject {
             })
         }
 
+        var providedServices = providedServices
         providedServices.append(ServiceRegistry(services: [
             registerService(serviceName: "com.roonlabs.ping:1", specs: .init(methods: [
                 "ping": { moo, request in

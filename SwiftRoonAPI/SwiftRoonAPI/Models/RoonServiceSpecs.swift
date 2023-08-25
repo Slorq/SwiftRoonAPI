@@ -17,12 +17,13 @@ public class RoonServiceSpecs {
         self.subscriptions = subscriptions
         self.methods = methods
     }
-    
+
 }
 
 extension RoonServiceSpecs {
 
     class Subscription {
+
         let subscribeName: String
         let unsubscribeName: String
         let start: (_Moo, MooMessage) -> Void

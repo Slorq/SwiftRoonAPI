@@ -18,7 +18,7 @@ final class MooEncoderTests: XCTestCase {
         let messages: [MooMessage] = [
             MooMessage(requestID: 1, verb: MooVerb.complete, name: .success),
             MooMessage(requestID: 0, verb: MooVerb.request, name: .info),
-            MooMessage(requestID: 1, verb: MooVerb.request, name: .register, headers: [MooHeaderName.contentType: .applicationJson], body: RoonExtensionRegInfo.makeEncoded()),
+            MooMessage(requestID: 1, verb: MooVerb.request, name: .register, headers: [MooHeaderName.contentType: .applicationJson], body: RoonExtensionDetails.makeEncoded()),
             MooMessage(requestID: 2, verb: MooVerb.request, name: "com.roonlabs.transport:2/subscribe_zones", body: try! SubscriptionBody.makeEncoded()),
         ]
 

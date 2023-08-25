@@ -14,6 +14,7 @@ public extension RoonServiceName {
 }
 
 public struct RoonService {
+    
     let name: RoonServiceName
     let specs: RoonServiceSpecs?
 

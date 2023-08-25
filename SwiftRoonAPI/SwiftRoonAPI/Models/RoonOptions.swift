@@ -13,18 +13,15 @@ public struct RoonOptions {
     let displayVersion: String
     let email: String
     let extensionID: String
-    public private(set) var optionalServices: [RoonService] = []
-    public private(set) var providedServices: [RoonService] = []
     let publisher: String
-    public private(set) var requiredServices: [RoonService] = []
     let website: String
 
     public init(displayName: String,
-         displayVersion: String,
-         email: String,
-         extensionID: String,
-         publisher: String,
-         website: String) {
+                displayVersion: String,
+                email: String,
+                extensionID: String,
+                publisher: String,
+                website: String) {
         self.displayName = displayName
         self.displayVersion = displayVersion
         self.email = email
