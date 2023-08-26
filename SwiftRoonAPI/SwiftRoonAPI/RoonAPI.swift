@@ -75,75 +75,7 @@ public final class RoonAPI {
         }
 
         if corePaired != nil {
-            let onPairingStart: (_Moo, MooMessage) -> Void = { [weak self] moo, request in
-                let pairedCore = (self?.pairedCore?.coreID).map { PairedCore(coreID: $0) }
-                let body = try? pairedCore?.jsonEncoded()
-                moo.sendContinue(MooName.subscribed, body: body, message: request, completion: nil)
-            }
-            let getPairing: (_Moo, MooMessage) -> Void = { [weak self] moo, request in
-                let pairedCore = (self?.pairedCore?.coreID).map { PairedCore(coreID: $0) }
-                let body = try? pairedCore?.jsonEncoded()
-                moo.sendComplete(MooName.success, body: body, message: request, completion: nil)
-            }
-            let pair: (_Moo, MooMessage) -> Void = { [weak self] moo, request in
-                guard let self,
-                      let body = request.body,
-                      let core = try? JSONDecoder.default.decode(RoonCore.self, from: body) else {
-                    return
-                }
-
-                if self.pairedCore?.coreID != core.coreID {
-                    if let pairedCore = self.pairedCore {
-                        self.coreLost?(pairedCore)
-                        self.pairedCore = nil
-                    }
-                    self.pairingService?.foundCore(core)
-                }
-            }
-
-            let service = registerService(
-                serviceName: .pairing,
-                subscriptions: [
-                    .init(subscribeName: "subscribe_pairing",
-                          unsubscribeName: "unsubscribe_pairing",
-                          start: onPairingStart)
-                ],
-                handlers: [
-                    "get_pairing": getPairing,
-                    "pair": pair
-                ]
-            )
-
-            pairingService = .init(services: [service],
-                                   foundCore: { [weak self] core in
-                guard let self else { return }
-                if self.pairedCore == nil {
-                    self.roonSettings.pairedCoreID = core.coreID
-
-                    self.pairedCore = core
-                    self.isPaired = true
-
-                    let pairedCore = PairedCore(coreID: core.coreID)
-                    let body = try? pairedCore.jsonEncoded()
-                    body.map {
-                        RegisteredServiceHandler.sendContinueAll(service: service,
-                                                                 moo: core.moo,
-                                                                 subservice: "subscribe_pairing",
-                                                                 name: "Changed",
-                                                                 body: $0)
-                    }
-                }
-                if core.coreID == self.pairedCore?.coreID {
-                    self.corePaired?(core)
-                }
-            },
-                                   lostCore: { [weak self] core in
-                guard let self else { return }
-                if core.coreID == self.pairedCore?.coreID {
-                    self.isPaired = false
-                }
-                self.coreUnpaired?(core)
-            })
+            startPairingService()
         }
 
         var providedServices = providedServices
@@ -234,6 +166,78 @@ public final class RoonAPI {
         }
 
         return registeredService
+    }
+
+    private func startPairingService() {
+        let onPairingStart: (_Moo, MooMessage) -> Void = { [weak self] moo, request in
+            let pairedCore = (self?.pairedCore?.coreID).map { PairedCore(coreID: $0) }
+            let body = try? pairedCore?.jsonEncoded()
+            moo.sendContinue(MooName.subscribed, body: body, message: request, completion: nil)
+        }
+        let getPairing: (_Moo, MooMessage) -> Void = { [weak self] moo, request in
+            let pairedCore = (self?.pairedCore?.coreID).map { PairedCore(coreID: $0) }
+            let body = try? pairedCore?.jsonEncoded()
+            moo.sendComplete(MooName.success, body: body, message: request, completion: nil)
+        }
+        let pair: (_Moo, MooMessage) -> Void = { [weak self] moo, request in
+            guard let self,
+                  let body = request.body,
+                  let core = try? JSONDecoder.default.decode(RoonCore.self, from: body) else {
+                return
+            }
+
+            if self.pairedCore?.coreID != core.coreID {
+                if let pairedCore = self.pairedCore {
+                    self.coreLost?(pairedCore)
+                    self.pairedCore = nil
+                }
+                self.pairingService?.foundCore(core)
+            }
+        }
+
+        let service = registerService(
+            serviceName: .pairing,
+            subscriptions: [
+                .init(subscribeName: "subscribe_pairing",
+                      unsubscribeName: "unsubscribe_pairing",
+                      start: onPairingStart)
+            ],
+            handlers: [
+                "get_pairing": getPairing,
+                "pair": pair
+            ]
+        )
+
+        pairingService = .init(services: [service],
+                               foundCore: { [weak self] core in
+            guard let self else { return }
+            if self.pairedCore == nil {
+                self.roonSettings.pairedCoreID = core.coreID
+
+                self.pairedCore = core
+                self.isPaired = true
+
+                let pairedCore = PairedCore(coreID: core.coreID)
+                let body = try? pairedCore.jsonEncoded()
+                body.map {
+                    RegisteredServiceHandler.sendContinueAll(service: service,
+                                                             moo: core.moo,
+                                                             subservice: "subscribe_pairing",
+                                                             name: "Changed",
+                                                             body: $0)
+                }
+            }
+            if core.coreID == self.pairedCore?.coreID {
+                self.corePaired?(core)
+            }
+        },
+                               lostCore: { [weak self] core in
+            guard let self else { return }
+            if core.coreID == self.pairedCore?.coreID {
+                self.isPaired = false
+            }
+            self.coreUnpaired?(core)
+        })
     }
 
     private func periodicScan() {

@@ -9,7 +9,7 @@ import Foundation
 
 open class ServiceRegistry {
 
-    public private(set) var services: [RegisteredService] = []
+    private(set) var services: [RegisteredService] = []
 
     public init(services: [RegisteredService]) {
         self.services = services

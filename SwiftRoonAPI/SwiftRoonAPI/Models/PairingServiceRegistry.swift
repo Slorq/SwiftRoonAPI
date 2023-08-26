@@ -9,6 +9,7 @@ import Foundation
 import SwiftRoonAPICore
 
 class PairingServiceRegistry: ServiceRegistry {
+    
     let foundCore: (RoonCore) -> Void
     let lostCore: (RoonCore) -> Void
 
