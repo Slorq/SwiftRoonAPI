@@ -100,18 +100,18 @@ public final class RoonAPI {
                     self.pairingService?.foundCore(core)
                 }
             }
-            let service = registerService(serviceName: .pairing,
-                                          specs: .init(
-                                            subscriptions: [
-                                                .init(subscribeName: "subscribe_pairing",
-                                                      unsubscribeName: "unsubscribe_pairing",
-                                                      start: onPairingStart)
-                                            ],
-                                            methods: [
-                                                "get_pairing": getPairing,
-                                                "pair": pair
-                                            ]
-                                          )
+
+            let service = registerService(
+                serviceName: .pairing,
+                subscriptions: [
+                    .init(subscribeName: "subscribe_pairing",
+                          unsubscribeName: "unsubscribe_pairing",
+                          start: onPairingStart)
+                ],
+                handlers: [
+                    "get_pairing": getPairing,
+                    "pair": pair
+                ]
             )
 
             pairingService = .init(services: [service],
@@ -148,11 +148,14 @@ public final class RoonAPI {
 
         var providedServices = providedServices
         providedServices.append(ServiceRegistry(services: [
-            registerService(serviceName: "com.roonlabs.ping:1", specs: .init(methods: [
-                "ping": { moo, request in
-                    moo.sendComplete(message: request)
-                }
-            ]))
+            registerService(
+                serviceName: "com.roonlabs.ping:1",
+                handlers: [
+                    "ping": { moo, request in
+                        moo.sendComplete(message: request)
+                    }
+                ]
+            )
         ]))
 
         self.extensionDetails.optionalServices.append(contentsOf: optionalServices.reduce(into: [], {
@@ -168,13 +171,16 @@ public final class RoonAPI {
         self.servicesOpts = (optionalServices, requiredServices, providedServices)
     }
 
-    public func registerService(serviceName: String, specs: RoonServiceSpecs) -> RegisteredService {
+    public func registerService(serviceName: String,
+                                subscriptions: [Subscription] = [],
+                                handlers: ServiceMethodHandlers) -> RegisteredService {
         logger.log(level: .info, "Registering service \(serviceName)")
+        var mutableHandlers = handlers
         let registeredService = RegisteredService(name: serviceName)
 
-        specs.subscriptions.forEach { subscription in
+        subscriptions.forEach { subscription in
             let subname = subscription.subscribeName
-            specs.methods[subname] = { moo, request in
+            mutableHandlers[subname] = { moo, request in
                 guard let body = request.body,
                       let subscriptionBody = try? JSONDecoder.default.decode(SubscriptionBody.self, from: body) else {
                     assertionFailure("Unable to decode subscriptionBody")
@@ -196,7 +202,7 @@ public final class RoonAPI {
                 )
             }
 
-            specs.methods[subscription.unsubscribeName] = { moo, request in
+            mutableHandlers[subscription.unsubscribeName] = { moo, request in
                 guard let body = request.body,
                       let subscriptionBody = try? JSONDecoder.default.decode(SubscriptionBody.self, from: body) else {
                     assertionFailure("Unable to decode subscriptionBody")
@@ -211,7 +217,7 @@ public final class RoonAPI {
 
         serviceRequestHandlers[serviceName] = { moo, request in
             if let request {
-                if let method = specs.methods[request.name] {
+                if let method = mutableHandlers[request.name] {
                     method(moo, request)
                 } else {
                     let bodyString = "{ \"error\": \"unknown request name (\(serviceName)) : \(request.name)\" }"
@@ -219,7 +225,7 @@ public final class RoonAPI {
                     moo.sendComplete(MooName.invalidRequest, body: body, message: request)
                 }
             } else {
-                specs.subscriptions.forEach { s in
+                subscriptions.forEach { s in
                     let subname = s.subscribeName
                     registeredService.remove(subserviceName: subname, mooID: moo.mooID)
                     s.end?()
