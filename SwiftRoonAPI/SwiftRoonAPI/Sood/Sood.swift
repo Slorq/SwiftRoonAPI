@@ -9,24 +9,47 @@ import Combine
 import Foundation
 import Network
 import SwiftLogger
+import SwiftRoonAPICore
 import SystemConfiguration
 
-class Sood: NSObject {
+protocol _Sood: AutoMockable {
+
+    var isStarted: Bool { get }
+    var onMessage: ((SoodMessage) -> Void)? { get set }
+    var onNetwork: (() -> Void)? { get set }
+
+    func query(serviceId: String)
+    func start(_ onStart: (() -> Void)?)
+}
+
+class Sood: NSObject, _Sood {
 
     private static let soodMulticastIP = "239.255.90.90"
     private static let soodPort: UInt16 = 9003
 
+    private let interfacesProvider: _NetworkInterfacesProvider.Type
+    private let socketFactory: _SocketFactory
     private let logger = Logger()
 
+    private let parser = SoodMessageParser()
     private var interfaceSequence = 0
     private var interfaceTimer: AnyCancellable?
     private var multicast: [String: MulticastInterface] = [:]
-    private var unicast: UnicastInterface = .init(sendSocket: nil, interfaceSequence: 0)
+    private var unicast: UnicastInterface = .init(sendSocket: nil)
+
+    private(set) var isStarted = false
 
     var onMessage: ((SoodMessage) -> Void)?
     var onNetwork: (() -> Void)?
 
+    init(interfacesProvider: _NetworkInterfacesProvider.Type = NetworkInterfacesProvider.self,
+         socketFactory: _SocketFactory = SocketFactory()) {
+        self.interfacesProvider = interfacesProvider
+        self.socketFactory = socketFactory
+    }
+
     func start(_ onStart: (() -> Void)?) {
+        isStarted = true
         interfaceTimer = Timer.publish(every: 5, on: .current, in: .default)
             .autoconnect()
             .sink { [weak self] _ in self?.initSocket(onStart) }
@@ -80,7 +103,7 @@ class Sood: NSObject {
         logger.log("Init socket")
         interfaceSequence += 1
         var interfaceChange = false
-        let interfaces = NetworkInterfacesProvider.interfaces
+        let interfaces = interfacesProvider.interfaces
 
         interfaces.forEach { interface in
             if listenInterface(netInfo: interface) {
@@ -98,7 +121,9 @@ class Sood: NSObject {
         if unicast.sendSocket == nil {
             logger.log("Creating unicast")
             do {
-                let socket = try SocketFacade(port: 0, enableBroadcast: true)
+                let socket = try SocketFacade(port: 0,
+                                              enableBroadcast: true,
+                                              socket: socketFactory.make())
                 socket.onError = { [weak socket] error in
                     socket?.close()
                 }
@@ -106,7 +131,7 @@ class Sood: NSObject {
                     self?.unicast.sendSocket = nil
                 }
                 socket.onMessage = { [weak self] data, messageInfo in
-                    guard let message = self?.parse(data: data, messageInfo: messageInfo) else { return }
+                    guard let message = self?.parser.parse(data, messageInfo: messageInfo) else { return }
                     self?.onMessage?(message)
                 }
                 unicast.sendSocket = socket
@@ -115,63 +140,11 @@ class Sood: NSObject {
             }
         }
 
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.2) {
+            onStart?()
+        }
         if interfaceChange {
             onNetwork?()
-        }
-    }
-
-    private func parse(data: Data, messageInfo: MessageInfo) -> SoodMessage? {
-        guard var messageString = String(data: data, encoding: .utf8) else { return nil }
-
-        var from = SoodMessage.From(ip: messageInfo.address, port: messageInfo.port)
-        guard messageString.droppingPrefix(4) == "SOOD" else { return nil }
-        guard messageString.droppingPrefix(1) == "\u{02}" else { return nil }
-        let type = messageString.droppingPrefix(1)
-
-        var propsDict: [String: String] = [:]
-        while !messageString.isEmpty {
-            guard let nameLength = [UInt8](messageString.droppingPrefix(1).utf8).first else {
-                return nil
-            }
-            guard messageString.count >= nameLength else {
-                return nil
-            }
-            let name = messageString.droppingPrefix(Int(nameLength))
-
-            let rawValueLength = [UInt8](messageString.droppingPrefix(2).utf8)
-            guard rawValueLength.count == 2,
-                  let firstValueLength = rawValueLength.first,
-                  let secondValueLength = rawValueLength.last else {
-                return nil
-            }
-
-            let valueLength = (Int(firstValueLength) << 8) | Int(secondValueLength)
-            let value: String
-            if valueLength == 65535 {
-                return nil
-            } else if valueLength == 0 {
-                value = ""
-            } else {
-                guard messageString.count >= valueLength else { return nil }
-                value = messageString.droppingPrefix(valueLength)
-            }
-
-            if name == "_replyaddr" {
-                from.ip = value
-            } else if name == "_replyport", let port = [UInt16](value.utf16).first {
-                from.port = port
-            }
-
-            propsDict[name] = value
-        }
-
-        do {
-            let jsonProps = try JSONEncoder.default.encode(propsDict)
-            let props = try JSONDecoder.default.decode(SoodMessage.Props.self, from: jsonProps)
-            return .init(props: props, from: from, type: type)
-        } catch {
-            assertionFailure("something went wrong \(#function) - \(error)")
-            return nil
         }
     }
 
@@ -186,9 +159,10 @@ class Sood: NSObject {
             newInterface = true
             do {
                 let socket = try SocketFacade(port: Sood.soodPort,
-                                        enableReusePort: true,
-                                        joinMulticastGroup: Sood.soodMulticastIP,
-                                        onInterface: netInfo.ip)
+                                              enableReusePort: true,
+                                              joinMulticastGroup: Sood.soodMulticastIP,
+                                              onInterface: netInfo.ip,
+                                              socket: socketFactory.make())
                 socket.onError = { [weak socket] error in
                     socket?.close()
                 }
@@ -196,7 +170,7 @@ class Sood: NSObject {
                     interface?.receiveSocket = nil
                 }
                 socket.onMessage = { [weak self] data, messageInfo in
-                    guard let message = self?.parse(data: data, messageInfo: messageInfo) else { return }
+                    guard let message = self?.parser.parse(data, messageInfo: messageInfo) else { return }
                     self?.onMessage?(message)
                 }
                 interface.receiveSocket = socket
@@ -210,8 +184,9 @@ class Sood: NSObject {
             interface.broadcast = netInfo.broadcast
             do {
                 let socket = try SocketFacade(port: 0,
-                                        address: netInfo.ip,
-                                        enableBroadcast: true)
+                                              address: netInfo.ip,
+                                              enableBroadcast: true,
+                                              socket: socketFactory.make())
                 socket.onError = { [weak socket] error in
                     socket?.close()
                 }
@@ -219,7 +194,7 @@ class Sood: NSObject {
                     interface?.sendSocket = nil
                 }
                 socket.onMessage = { [weak self] data, messageInfo in
-                    guard let message = self?.parse(data: data, messageInfo: messageInfo) else { return }
+                    guard let message = self?.parser.parse(data, messageInfo: messageInfo) else { return }
                     self?.onMessage?(message)
                 }
                 interface.sendSocket = socket
@@ -234,3 +209,26 @@ class Sood: NSObject {
     }
 
 }
+
+#if DEBUG
+extension Sood {
+
+    var testHooks: TestHooks {
+        .init(sood: self)
+    }
+
+    struct TestHooks {
+
+        private let sood: Sood
+
+        init(sood: Sood) {
+            self.sood = sood
+        }
+
+        var multicast: [String: MulticastInterface] { sood.multicast }
+        var unicast: UnicastInterface { sood.unicast }
+
+    }
+
+}
+#endif

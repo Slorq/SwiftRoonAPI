@@ -8,26 +8,24 @@
 @testable import SwiftRoonAPI
 import XCTest
 
-final class RegisteredServiceHandlerTests: XCTestCase {
+final class RoonServiceTests: XCTestCase {
 
     func testSendContinueAll() {
         // Given
         let subservice = "subscribe_pairing"
-        let subservices: RegisteredSubservices = [
-            subservice: [
-                1: [
-                    "string2": .init(message: .init(requestID: 1, verb: .request, name: .continueChanged))
-                ]
-            ]
-        ]
+        let service: RoonService = RoonService(name: subservice)
         let transport = _MooTransportMock()
-        let moo = _Moo(transport: transport)
+        let moo = Moo(transport: transport)
         let name = "name"
         let body = "data".data(using: .utf8)
 
+        service.register(handler: .init(message: .init(requestID: 1, verb: .request, name: .continueChanged)),
+                         subserviceName: subservice,
+                         mooID: 1,
+                         subscriptionKey: "string2")
+
         // When
-        RegisteredServiceHandler.sendContinueAll(
-            subservices: subservices,
+        service.sendContinueAll(
             moo: moo,
             subservice: subservice,
             name: name,

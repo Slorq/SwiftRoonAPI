@@ -16,11 +16,11 @@ public class SubscriptionMessageHandler {
         self.message = message
     }
 
-    var sendComplete: (Moo, String, Data?, MooMessage) -> Void = { moo, name, body, message in
+    var sendComplete: (_Moo, String, Data?, MooMessage) -> Void = { moo, name, body, message in
         moo.sendComplete(name, body: body, message: message)
     }
 
-    var sendContinue: (Moo, String, Data?, MooMessage) -> Void = { moo, name, body, message in
+    var sendContinue: (_Moo, String, Data?, MooMessage) -> Void = { moo, name, body, message in
         moo.sendContinue(name, body: body, message: message)
     }
 }

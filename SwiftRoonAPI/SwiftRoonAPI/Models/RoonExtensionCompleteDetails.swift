@@ -1,5 +1,5 @@
 //
-//  RoonExtensionRegInfo.swift
+//  RoonExtensionCompleteDetails.swift
 //  RoonMiniPlayer
 //
 //  Created by Alejandro Maya on 29/01/23.
@@ -8,17 +8,17 @@
 import Foundation
 import SwiftRoonAPICore
 
-struct RoonExtensionRegInfo: Codable {
+struct RoonExtensionCompleteDetails: Codable {
 
     let displayName: String
     let displayVersion: String
     let email: String
     let extensionID: String
-    public var optionalServices: [RoonServiceName] = []
-    public var providedServices: [RoonServiceName] = []
     let publisher: String
-    public var requiredServices: [RoonServiceName] = []
     let website: String
+    var optionalServices: [RoonServiceName] = []
+    var providedServices: [RoonServiceName] = []
+    var requiredServices: [RoonServiceName] = []
     var token: String?
 
     init(displayName: String,
@@ -50,17 +50,14 @@ struct RoonExtensionRegInfo: Codable {
 
 }
 
-extension RoonExtensionRegInfo {
+extension RoonExtensionCompleteDetails {
     
-    init(options: RoonOptions) {
-        displayName = options.displayName
-        displayVersion = options.displayVersion
-        email = options.email
-        extensionID = options.extensionID
-        optionalServices = options.optionalServices.map { $0.name }
-        providedServices = options.providedServices.map { $0.name }
-        publisher = options.publisher
-        requiredServices = options.requiredServices.map { $0.name }
-        website = options.website
+    init(details: RoonExtensionDetails) {
+        displayName = details.displayName
+        displayVersion = details.displayVersion
+        email = details.email
+        extensionID = details.extensionID
+        publisher = details.publisher
+        website = details.website
     }
 }

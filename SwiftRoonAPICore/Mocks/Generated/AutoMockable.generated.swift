@@ -35,7 +35,7 @@ import SwiftRoonAPICore
 
 
 
-public class MooMock: Moo {
+public class MooMock: _Moo {
 
     public init() {}
 

@@ -16,7 +16,7 @@ public class RoonCore: Codable {
     public let providedServices: [RoonServiceName]?
     public let httpPort: UInt16?
     public let extensionHost: String?
-    public unowned var moo: Moo!
+    public unowned var moo: _Moo!
 
     #if DEBUG
     public init(coreID: String,
@@ -26,7 +26,7 @@ public class RoonCore: Codable {
                 providedServices: [RoonServiceName]?,
                 httpPort: UInt16?,
                 extensionHost: String?,
-                moo: Moo) {
+                moo: _Moo) {
         self.coreID = coreID
         self.displayName = displayName
         self.displayVersion = displayVersion

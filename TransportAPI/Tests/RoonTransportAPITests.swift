@@ -574,7 +574,7 @@ private extension RoonCore {
         providedServices: [RoonServiceName]? = [],
         httpPort: UInt16? = 8080,
         extensionHost: String? = "ExtensionHost",
-        moo: Moo
+        moo: _Moo
     ) -> RoonCore {
         RoonCore(
             coreID: coreID,

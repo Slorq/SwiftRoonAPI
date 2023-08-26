@@ -15,69 +15,58 @@ private let roonServiceID = "00720724-5143-4a9b-abac-0e50cba674bb"
 
 public typealias RoonCore = SwiftRoonAPICore.RoonCore
 
-struct RoonServices {
-    let required: [RoonServiceName]
-    let optional: [RoonServiceName]
-    let provided: [RoonServiceName]
-}
-
-public class RoonAPI: NSObject {
+public final class RoonAPI {
 
     public typealias RoonCoreCompletionHandler = (RoonCore) -> Void
     public typealias RoonErrorCompletionHandler = (Error) -> Void
 
     private let logger = Logger()
-    private var extensionRegInfo: RoonExtensionRegInfo
+    private var extensionDetailsPayload: RoonExtensionCompleteDetails
     private var isPaired = false
-    private var options: RoonOptions
     private var pairedCore: RoonCore?
-    private var pairingService: PairingServiceRegistry?
+    private var pairingService: PairingService?
     private var periodicScanSubscription: AnyCancellable?
     private var roonSettings = RoonSettings()
     private var scanCount = 0
-    private var serviceRequestHandlers: [String: (Moo, MooMessage?) -> Void] = [:]
-    private var servicesOpts: ([ServiceRegistry], [ServiceRegistry], [ServiceRegistry])?
-    private var sood: Sood?
-    private var soodConnections: [String: Moo] = [:]
+    private var serviceRequestHandlers: [String: (_Moo, MooMessage?) -> Void] = [:]
+    private var registeredServices: ([RoonService], [RoonService], [RoonService])?
+    private var sood: _Sood
+    private var soodConnections: [String: _Moo] = [:]
     public var coreFound: RoonCoreCompletionHandler?
     public var coreLost: RoonCoreCompletionHandler?
     public var corePaired: RoonCoreCompletionHandler?
     public var coreUnpaired: RoonCoreCompletionHandler?
     public var onError: RoonErrorCompletionHandler?
 
-    public init(options: RoonOptions) {
-        self.options = options
-        self.extensionRegInfo = .init(options: options)
+    public convenience init(details: RoonExtensionDetails) {
+        self.init(details: details, sood: Sood())
+    }
 
-        super.init()
+    init(details: RoonExtensionDetails, sood: _Sood) {
+        self.extensionDetailsPayload = RoonExtensionCompleteDetails(details: details)
+        self.sood = sood
+        self.sood.onMessage = { [weak self] in self?.onSoodMessage($0) }
+        self.sood.onNetwork = { [weak self] in self?.onSoodNetwork() }
     }
 
     public func startDiscovery() {
-        guard sood == nil else {
+        guard !sood.isStarted else {
             logger.log(level: .warning, "Discovery has already been started")
             return
         }
 
         logger.log(level: .info, "Starting discovery")
-        let sood = Sood()
-        self.sood = sood
-        sood.onMessage = { [weak self] in self?.onSoodMessage($0) }
-        sood.onNetwork = { [weak self] in self?.onSoodNetwork() }
         sood.start { [weak self] in self?.onSoodStart() }
     }
 
-    public func initServices(optionalServices: [ServiceRegistry] = [],
-                             requiredServices: [ServiceRegistry] = [],
-                             providedServices: [ServiceRegistry] = []) throws {
+    public func registerServices(optionalServices: [RoonService] = [],
+                                 requiredServices: [RoonService] = [],
+                                 providedServices: [RoonService] = []) throws {
         logger.log(level: .info,
                    logMessage(optionalServices: optionalServices,
                               requiredServices: requiredServices,
                               providedServices: providedServices)
         )
-
-        let optionalServices = optionalServices
-        let requiredServices = requiredServices
-        var providedServices = providedServices
 
         if !requiredServices.isEmpty || !optionalServices.isEmpty {
             if corePaired == nil && coreFound == nil {
@@ -86,106 +75,38 @@ public class RoonAPI: NSObject {
         }
 
         if corePaired != nil {
-            let onPairingStart: (Moo, MooMessage) -> Void = { [weak self] moo, request in
-                let pairedCore = (self?.pairedCore?.coreID).map { PairedCore(coreID: $0) }
-                let body = try? pairedCore?.jsonEncoded()
-                moo.sendContinue(MooName.subscribed, body: body, message: request, completion: nil)
-            }
-            let getPairing: (Moo, MooMessage) -> Void = { [weak self] moo, request in
-                let pairedCore = (self?.pairedCore?.coreID).map { PairedCore(coreID: $0) }
-                let body = try? pairedCore?.jsonEncoded()
-                moo.sendComplete(MooName.success, body: body, message: request, completion: nil)
-            }
-            let pair: (Moo, MooMessage) -> Void = { [weak self] moo, request in
-                guard let self,
-                      let body = request.body,
-                      let core = try? JSONDecoder.default.decode(RoonCore.self, from: body) else {
-                    return
-                }
-
-                if self.pairedCore?.coreID != core.coreID {
-                    if let pairedCore = self.pairedCore {
-                        self.coreLost?(pairedCore)
-                        self.pairedCore = nil
-                    }
-                    self.pairingService?.foundCore(core)
-                }
-            }
-            let service = registerService(serviceName: .pairing,
-                                          specs: .init(
-                                            subscriptions: [
-                                                .init(subscribeName: "subscribe_pairing",
-                                                      unsubscribeName: "unsubscribe_pairing",
-                                                      start: onPairingStart)
-                                            ],
-                                            methods: [
-                                                "get_pairing": getPairing,
-                                                "pair": pair
-                                            ]
-                                          )
-            )
-
-            pairingService = .init(services: [service],
-                                   foundCore: { [weak self] core in
-                guard let self else { return }
-                if self.pairedCore == nil {
-                    self.roonSettings.pairedCoreID = core.coreID
-
-                    self.pairedCore = core
-                    self.isPaired = true
-
-                    let pairedCore = PairedCore(coreID: core.coreID)
-                    let body = try? pairedCore.jsonEncoded()
-                    body.map {
-                        RegisteredServiceHandler.sendContinueAll(subservices: service.subservices,
-                                                                 moo: core.moo,
-                                                                 subservice: "subscribe_pairing",
-                                                                 name: "Changed",
-                                                                 body: $0)
-                    }
-                }
-                if core.coreID == self.pairedCore?.coreID {
-                    self.corePaired?(core)
-                }
-            },
-                                   lostCore: { [weak self] core in
-                guard let self else { return }
-                if core.coreID == self.pairedCore?.coreID {
-                    self.isPaired = false
-                }
-                self.coreUnpaired?(core)
-            })
+            startPairingService()
         }
 
-        providedServices.append(.init(services: [
-            registerService(serviceName: "com.roonlabs.ping:1", specs: .init(methods: [
-                "ping": { moo, request in
-                    moo.sendComplete(message: request)
-                }
-            ]))
-        ]))
+        var providedServices = providedServices
+        providedServices.append(
+            registerService(
+                serviceName: "com.roonlabs.ping:1",
+                handlers: [
+                    "ping": { moo, request in
+                        moo.sendComplete(message: request)
+                    }
+                ]
+            )
+        )
 
-        self.extensionRegInfo.optionalServices.append(contentsOf: optionalServices.reduce(into: [], {
-            $0.append(contentsOf: $1.services.compactMap { $0.name })
-        }))
-        self.extensionRegInfo.requiredServices.append(contentsOf: requiredServices.reduce(into: [], {
-            $0.append(contentsOf: $1.services.compactMap { $0.name })
-        }))
-        self.extensionRegInfo.providedServices.append(contentsOf: providedServices.reduce(into: [], {
-            $0.append(contentsOf: $1.services.compactMap { $0.name })
-        }))
+        self.extensionDetailsPayload.optionalServices.append(contentsOf: optionalServices.map { $0.name })
+        self.extensionDetailsPayload.requiredServices.append(contentsOf: requiredServices.map { $0.name })
+        self.extensionDetailsPayload.providedServices.append(contentsOf: providedServices.map { $0.name })
 
-        self.servicesOpts = (optionalServices, requiredServices, providedServices)
+        self.registeredServices = (optionalServices, requiredServices, providedServices)
     }
 
-    public func registerService(serviceName: String, specs: RoonServiceSpecs) -> RegisteredService {
+    private func registerService(serviceName: String,
+                                 subscriptions: [Subscription] = [],
+                                 handlers: ServiceMethodHandlers) -> RoonService {
         logger.log(level: .info, "Registering service \(serviceName)")
-        let registeredService = RegisteredService()
+        var mutableHandlers = handlers
+        let registeredService = RoonService(name: serviceName)
 
-        specs.subscriptions.forEach { s in
-            let subname = s.subscribeName
-            registeredService.subservices[subname] = [:]
-            specs.methods[subname] = { moo, request in
+        subscriptions.forEach { subscription in
+            let subscribeName = subscription.subscribeName
+            mutableHandlers[subscribeName] = { moo, request in
                 guard let body = request.body,
                       let subscriptionBody = try? JSONDecoder.default.decode(SubscriptionBody.self, from: body) else {
                     assertionFailure("Unable to decode subscriptionBody")
@@ -196,31 +117,33 @@ public class RoonAPI: NSObject {
                 let originalSendComplete = subscriptionMessageHandler.sendComplete
                 subscriptionMessageHandler.sendComplete = { moo, name, body, message in
                     originalSendComplete(moo, name, body, message)
-                    registeredService.subservices[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = nil
+                    registeredService.remove(subserviceName: subscribeName, mooID: moo.mooID, subscriptionKey: subscriptionBody.subscriptionKey)
                 }
-                s.start(moo, request)
-                if registeredService.subservices[subname]?[moo.mooID] == nil {
-                    registeredService.subservices[subname]?[moo.mooID] = [:]
-                }
-                registeredService.subservices[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = subscriptionMessageHandler
+                subscription.start(moo, request)
+                registeredService.register(
+                    handler: subscriptionMessageHandler,
+                    subserviceName: subscribeName,
+                    mooID: moo.mooID,
+                    subscriptionKey: subscriptionBody.subscriptionKey
+                )
             }
 
-            specs.methods[s.unsubscribeName] = { moo, request in
+            mutableHandlers[subscription.unsubscribeName] = { moo, request in
                 guard let body = request.body,
                       let subscriptionBody = try? JSONDecoder.default.decode(SubscriptionBody.self, from: body) else {
                     assertionFailure("Unable to decode subscriptionBody")
                     return
                 }
 
-                registeredService.subservices[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = nil
-                s.end?()
+                registeredService.remove(subserviceName: subscribeName, mooID: moo.mooID, subscriptionKey: subscriptionBody.subscriptionKey)
+                subscription.end?()
                 moo.sendComplete(.unsubscribed, message: request)
             }
         }
 
         serviceRequestHandlers[serviceName] = { moo, request in
             if let request {
-                if let method = specs.methods[request.name] {
+                if let method = mutableHandlers[request.name] {
                     method(moo, request)
                 } else {
                     let bodyString = "{ \"error\": \"unknown request name (\(serviceName)) : \(request.name)\" }"
@@ -228,16 +151,88 @@ public class RoonAPI: NSObject {
                     moo.sendComplete(MooName.invalidRequest, body: body, message: request)
                 }
             } else {
-                specs.subscriptions.forEach { s in
+                subscriptions.forEach { s in
                     let subname = s.subscribeName
-                    registeredService.subservices[subname]?[moo.mooID] = nil
+                    registeredService.remove(subserviceName: subname, mooID: moo.mooID)
                     s.end?()
                 }
             }
         }
 
-        registeredService.name = serviceName
         return registeredService
+    }
+
+    private func startPairingService() {
+        let onPairingStart: (_Moo, MooMessage) -> Void = { [weak self] moo, request in
+            let pairedCore = (self?.pairedCore?.coreID).map { PairedCore(coreID: $0) }
+            let body = try? pairedCore?.jsonEncoded()
+            moo.sendContinue(MooName.subscribed, body: body, message: request, completion: nil)
+        }
+        let getPairing: (_Moo, MooMessage) -> Void = { [weak self] moo, request in
+            let pairedCore = (self?.pairedCore?.coreID).map { PairedCore(coreID: $0) }
+            let body = try? pairedCore?.jsonEncoded()
+            moo.sendComplete(MooName.success, body: body, message: request, completion: nil)
+        }
+        let pair: (_Moo, MooMessage) -> Void = { [weak self] moo, request in
+            guard let self,
+                  let body = request.body,
+                  let core = try? JSONDecoder.default.decode(RoonCore.self, from: body) else {
+                return
+            }
+
+            if self.pairedCore?.coreID != core.coreID {
+                if let pairedCore = self.pairedCore {
+                    self.coreLost?(pairedCore)
+                    self.pairedCore = nil
+                }
+                self.pairingService?.foundCore(core)
+            }
+        }
+
+        let service = registerService(
+            serviceName: .pairing,
+            subscriptions: [
+                .init(subscribeName: "subscribe_pairing",
+                      unsubscribeName: "unsubscribe_pairing",
+                      start: onPairingStart)
+            ],
+            handlers: [
+                "get_pairing": getPairing,
+                "pair": pair
+            ]
+        )
+
+        pairingService = .init(
+            service: service,
+            foundCore: { [weak self] core in
+                guard let self else { return }
+                if self.pairedCore == nil {
+                    self.roonSettings.pairedCoreID = core.coreID
+
+                    self.pairedCore = core
+                    self.isPaired = true
+
+                    let pairedCore = PairedCore(coreID: core.coreID)
+                    let body = try? pairedCore.jsonEncoded()
+                    body.map {
+                        service.sendContinueAll(moo: core.moo,
+                                                subservice: "subscribe_pairing",
+                                                name: "Changed",
+                                                body: $0)
+                    }
+                }
+                if core.coreID == self.pairedCore?.coreID {
+                    self.corePaired?(core)
+                }
+            },
+            lostCore: { [weak self] core in
+                guard let self else { return }
+                if core.coreID == self.pairedCore?.coreID {
+                    self.isPaired = false
+                }
+                self.coreUnpaired?(core)
+            }
+        )
     }
 
     private func periodicScan() {
@@ -245,12 +240,12 @@ public class RoonAPI: NSObject {
         logger.log("Periodic scan \(scanCount)")
         guard !isPaired else { return }
         guard scanCount < 0 || scanCount % 6 == 0 else { return }
-        sood?.query(serviceId: roonServiceID)
+        sood.query(serviceId: roonServiceID)
     }
 
     private func onSoodStart() {
         logger.log("Starting sood")
-        sood?.query(serviceId: roonServiceID)
+        sood.query(serviceId: roonServiceID)
         periodicScanSubscription = Timer.publish(every: 10, on: .current, in: .default)
             .autoconnect()
             .receive(on: RunLoop.main)
@@ -286,16 +281,16 @@ public class RoonAPI: NSObject {
 
     private func onSoodNetwork() {
         logger.log("Sood on network")
-        sood?.query(serviceId: roonServiceID)
+        sood.query(serviceId: roonServiceID)
     }
 
     private func wsConnect(hostIP: String,
                            httpPort: UInt16,
                            onClose: @escaping () -> Void,
-                           onError: @escaping (Error) -> Void) -> Moo {
+                           onError: @escaping (Error) -> Void) -> _Moo {
         logger.log("Sood WS Connect \(hostIP):\(httpPort)")
         let transport = try! MooTransport(host: hostIP, port: httpPort)
-        let moo = _Moo(transport: transport)
+        let moo = Moo(transport: transport)
 
         moo.onOpen = { [weak self] moo in
             guard let self else { return }
@@ -308,10 +303,10 @@ public class RoonAPI: NSObject {
                 }
 
                 if let token = self.roonSettings.roonState?.tokens[core.coreID] {
-                    self.extensionRegInfo.token = token
+                    self.extensionDetailsPayload.token = token
                 }
 
-                let body = try? self.extensionRegInfo.jsonEncoded()
+                let body = try? self.extensionDetailsPayload.jsonEncoded()
                 moo.sendRequest(name: .register, body: body, contentType: .applicationJson) { [weak self] message in
                     guard let self else { return }
                     self.logger.log(".** RoonAPI registered successfully \(String(describing: message))")
@@ -358,7 +353,7 @@ public class RoonAPI: NSObject {
         return moo
     }
 
-    private func evRegistered(moo: Moo, message: MooMessage?) {
+    private func evRegistered(moo: _Moo, message: MooMessage?) {
         if message == nil {
             // Lost connection
             if let core = moo.core {
@@ -380,9 +375,9 @@ public class RoonAPI: NSObject {
         }
     }
 
-    private func logMessage(optionalServices: [ServiceRegistry],
-                            requiredServices: [ServiceRegistry],
-                            providedServices: [ServiceRegistry]) -> String {
+    private func logMessage(optionalServices: [RoonService],
+                            requiredServices: [RoonService],
+                            providedServices: [RoonService]) -> String {
         var logMessage = "Initializing services\n"
         if !optionalServices.isEmpty {
             logMessage.append("\tOptional: \(optionalServices)\n")
@@ -407,6 +402,26 @@ extension URL {
     }()
 }
 
-enum RoonAPIError: Error {
+enum RoonAPIError: Error, Equatable {
     case unableToInitServices(details: String)
 }
+
+#if DEBUG
+extension RoonAPI {
+
+    var testHooks: TestHooks { .init(roonAPI: self) }
+
+    struct TestHooks {
+
+        private let roonAPI: RoonAPI
+
+        init(roonAPI: RoonAPI) {
+            self.roonAPI = roonAPI
+        }
+
+        var pairingService: PairingService? { roonAPI.pairingService }
+        var soodConnections: [String: _Moo] { roonAPI.soodConnections }
+
+    }
+}
+#endif

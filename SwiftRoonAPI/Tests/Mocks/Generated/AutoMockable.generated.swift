@@ -369,6 +369,49 @@ class _MooTransportMock: _MooTransport {
     }
 
 }
+class _SoodMock: _Sood {
+
+
+    var isStarted: Bool {
+        get { return underlyingIsStarted }
+        set(value) { underlyingIsStarted = value }
+    }
+    var underlyingIsStarted: Bool!
+    var onMessage: ((SoodMessage) -> Void)?
+    var onNetwork: (() -> Void)?
+
+
+    //MARK: - query
+
+    var queryServiceIdCallsCount = 0
+    var queryServiceIdCalled: Bool {
+        return queryServiceIdCallsCount > 0
+    }
+    var queryServiceIdReceivedServiceId: String?
+    var queryServiceIdReceivedInvocations: [String] = []
+    var queryServiceIdClosure: ((String) -> Void)?
+
+    func query(serviceId: String) {
+        queryServiceIdCallsCount += 1
+        queryServiceIdReceivedServiceId = serviceId
+        queryServiceIdReceivedInvocations.append(serviceId)
+        queryServiceIdClosure?(serviceId)
+    }
+
+    //MARK: - start
+
+    var startCallsCount = 0
+    var startCalled: Bool {
+        return startCallsCount > 0
+    }
+    var startClosure: (((() -> Void)?) -> Void)?
+
+    func start(_ onStart: (() -> Void)?) {
+        startCallsCount += 1
+        startClosure?(onStart)
+    }
+
+}
 class _URLSessionWebSocketTaskMock: _URLSessionWebSocketTask {
 
 

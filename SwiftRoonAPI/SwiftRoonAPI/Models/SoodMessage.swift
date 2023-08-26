@@ -7,7 +7,7 @@
 
 import Foundation
 
-struct SoodMessage {
+struct SoodMessage: Equatable {
 
     let props: Props
     let from: From
@@ -17,7 +17,7 @@ struct SoodMessage {
 
 extension SoodMessage {
 
-    struct Props: Codable {
+    struct Props: Codable, Equatable {
         let serviceId: String?
         let uniqueId: String?
         let httpPort: String?
@@ -26,6 +26,24 @@ extension SoodMessage {
         let httpsPort: String?
         let displayVersion: String?
         let name: String?
+
+        init(serviceId: String? = nil,
+             uniqueId: String? = nil,
+             httpPort: String? = nil,
+             tid: String? = nil,
+             tcpPort: String? = nil,
+             httpsPort: String? = nil,
+             displayVersion: String? = nil,
+             name: String? = nil) {
+            self.serviceId = serviceId
+            self.uniqueId = uniqueId
+            self.httpPort = httpPort
+            self.tid = tid
+            self.tcpPort = tcpPort
+            self.httpsPort = httpsPort
+            self.displayVersion = displayVersion
+            self.name = name
+        }
 
         enum CodingKeys: String, CodingKey {
             case serviceId = "service_id"
@@ -42,7 +60,7 @@ extension SoodMessage {
 
 extension SoodMessage {
     
-    struct From {
+    struct From: Equatable {
         var ip: String?
         var port: UInt16
     }
