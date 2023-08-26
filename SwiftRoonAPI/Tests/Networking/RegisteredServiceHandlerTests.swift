@@ -20,7 +20,7 @@ final class RoonServiceTests: XCTestCase {
         let body = "data".data(using: .utf8)
 
         service.register(handler: .init(message: .init(requestID: 1, verb: .request, name: .continueChanged)),
-                         subscriptionName: subservice,
+                         subserviceName: subservice,
                          mooID: 1,
                          subscriptionKey: "string2")
 
