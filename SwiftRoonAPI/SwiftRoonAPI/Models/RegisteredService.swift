@@ -7,14 +7,12 @@
 
 import Foundation
 
-//public typealias RegisteredSubservices = [String: [Int: [String: SubscriptionMessageHandler]]]
+open class RegisteredService {
 
-public class RegisteredService {
-
-    public private(set) var name: String?
+    public private(set) var name: String
     private var subservices: SubserviceRegistry
 
-    public init(name: String? = nil) {
+    public init(name: String) {
         self.name = name
         self.subservices = .init()
     }

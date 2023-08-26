@@ -21,7 +21,7 @@ public final class RoonAPI {
     public typealias RoonErrorCompletionHandler = (Error) -> Void
 
     private let logger = Logger()
-    private var extensionDetails: RoonExtensionCompleteDetails
+    private var extensionDetailsPayload: RoonExtensionCompleteDetails
     private var isPaired = false
     private var pairedCore: RoonCore?
     private var pairingService: PairingServiceRegistry?
@@ -29,7 +29,7 @@ public final class RoonAPI {
     private var roonSettings = RoonSettings()
     private var scanCount = 0
     private var serviceRequestHandlers: [String: (_Moo, MooMessage?) -> Void] = [:]
-    private var servicesOpts: ([ServiceRegistry], [ServiceRegistry], [ServiceRegistry])?
+    private var registeredServices: ([RegisteredService], [RegisteredService], [RegisteredService])?
     private var sood: _Sood
     private var soodConnections: [String: _Moo] = [:]
     public var coreFound: RoonCoreCompletionHandler?
@@ -43,7 +43,7 @@ public final class RoonAPI {
     }
 
     init(details: RoonExtensionDetails, sood: _Sood) {
-        self.extensionDetails = RoonExtensionCompleteDetails(details: details)
+        self.extensionDetailsPayload = RoonExtensionCompleteDetails(details: details)
         self.sood = sood
         self.sood.onMessage = { [weak self] in self?.onSoodMessage($0) }
         self.sood.onNetwork = { [weak self] in self?.onSoodNetwork() }
@@ -59,9 +59,9 @@ public final class RoonAPI {
         sood.start { [weak self] in self?.onSoodStart() }
     }
 
-    public func initServices(optionalServices: [ServiceRegistry] = [],
-                             requiredServices: [ServiceRegistry] = [],
-                             providedServices: [ServiceRegistry] = []) throws {
+    public func initServices(optionalServices: [RegisteredService] = [],
+                             requiredServices: [RegisteredService] = [],
+                             providedServices: [RegisteredService] = []) throws {
         logger.log(level: .info,
                    logMessage(optionalServices: optionalServices,
                               requiredServices: requiredServices,
@@ -79,7 +79,7 @@ public final class RoonAPI {
         }
 
         var providedServices = providedServices
-        providedServices.append(ServiceRegistry(services: [
+        providedServices.append(
             registerService(
                 serviceName: "com.roonlabs.ping:1",
                 handlers: [
@@ -88,19 +88,13 @@ public final class RoonAPI {
                     }
                 ]
             )
-        ]))
+        )
 
-        self.extensionDetails.optionalServices.append(contentsOf: optionalServices.reduce(into: [], {
-            $0.append(contentsOf: $1.services.compactMap { $0.name })
-        }))
-        self.extensionDetails.requiredServices.append(contentsOf: requiredServices.reduce(into: [], {
-            $0.append(contentsOf: $1.services.compactMap { $0.name })
-        }))
-        self.extensionDetails.providedServices.append(contentsOf: providedServices.reduce(into: [], {
-            $0.append(contentsOf: $1.services.compactMap { $0.name })
-        }))
+        self.extensionDetailsPayload.optionalServices.append(contentsOf: optionalServices.map { $0.name })
+        self.extensionDetailsPayload.requiredServices.append(contentsOf: requiredServices.map { $0.name })
+        self.extensionDetailsPayload.providedServices.append(contentsOf: providedServices.map { $0.name })
 
-        self.servicesOpts = (optionalServices, requiredServices, providedServices)
+        self.registeredServices = (optionalServices, requiredServices, providedServices)
     }
 
     public func registerService(serviceName: String,
@@ -308,10 +302,10 @@ public final class RoonAPI {
                 }
 
                 if let token = self.roonSettings.roonState?.tokens[core.coreID] {
-                    self.extensionDetails.token = token
+                    self.extensionDetailsPayload.token = token
                 }
 
-                let body = try? self.extensionDetails.jsonEncoded()
+                let body = try? self.extensionDetailsPayload.jsonEncoded()
                 moo.sendRequest(name: .register, body: body, contentType: .applicationJson) { [weak self] message in
                     guard let self else { return }
                     self.logger.log(".** RoonAPI registered successfully \(String(describing: message))")
@@ -380,9 +374,9 @@ public final class RoonAPI {
         }
     }
 
-    private func logMessage(optionalServices: [ServiceRegistry],
-                            requiredServices: [ServiceRegistry],
-                            providedServices: [ServiceRegistry]) -> String {
+    private func logMessage(optionalServices: [RegisteredService],
+                            requiredServices: [RegisteredService],
+                            providedServices: [RegisteredService]) -> String {
         var logMessage = "Initializing services\n"
         if !optionalServices.isEmpty {
             logMessage.append("\tOptional: \(optionalServices)\n")
