@@ -126,7 +126,7 @@ public final class RoonAPI {
                     let pairedCore = PairedCore(coreID: core.coreID)
                     let body = try? pairedCore.jsonEncoded()
                     body.map {
-                        RegisteredServiceHandler.sendContinueAll(subservices: service.subservices,
+                        RegisteredServiceHandler.sendContinueAll(service: service,
                                                                  moo: core.moo,
                                                                  subservice: "subscribe_pairing",
                                                                  name: "Changed",
@@ -170,11 +170,10 @@ public final class RoonAPI {
 
     public func registerService(serviceName: String, specs: RoonServiceSpecs) -> RegisteredService {
         logger.log(level: .info, "Registering service \(serviceName)")
-        let registeredService = RegisteredService()
+        let registeredService = RegisteredService(name: serviceName)
 
         specs.subscriptions.forEach { subscription in
             let subname = subscription.subscribeName
-            registeredService.subservices[subname] = [:]
             specs.methods[subname] = { moo, request in
                 guard let body = request.body,
                       let subscriptionBody = try? JSONDecoder.default.decode(SubscriptionBody.self, from: body) else {
@@ -186,13 +185,15 @@ public final class RoonAPI {
                 let originalSendComplete = subscriptionMessageHandler.sendComplete
                 subscriptionMessageHandler.sendComplete = { moo, name, body, message in
                     originalSendComplete(moo, name, body, message)
-                    registeredService.subservices[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = nil
+                    registeredService.remove(subserviceName: subname, mooID: moo.mooID, subscriptionKey: subscriptionBody.subscriptionKey)
                 }
                 subscription.start(moo, request)
-                if registeredService.subservices[subname]?[moo.mooID] == nil {
-                    registeredService.subservices[subname]?[moo.mooID] = [:]
-                }
-                registeredService.subservices[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = subscriptionMessageHandler
+                registeredService.register(
+                    handler: subscriptionMessageHandler,
+                    subscriptionName: subname,
+                    mooID: moo.mooID,
+                    subscriptionKey: subscriptionBody.subscriptionKey
+                )
             }
 
             specs.methods[subscription.unsubscribeName] = { moo, request in
@@ -202,7 +203,7 @@ public final class RoonAPI {
                     return
                 }
 
-                registeredService.subservices[subname]?[moo.mooID]?[subscriptionBody.subscriptionKey] = nil
+                registeredService.remove(subserviceName: subname, mooID: moo.mooID, subscriptionKey: subscriptionBody.subscriptionKey)
                 subscription.end?()
                 moo.sendComplete(.unsubscribed, message: request)
             }
@@ -220,13 +221,12 @@ public final class RoonAPI {
             } else {
                 specs.subscriptions.forEach { s in
                     let subname = s.subscribeName
-                    registeredService.subservices[subname]?[moo.mooID] = nil
+                    registeredService.remove(subserviceName: subname, mooID: moo.mooID)
                     s.end?()
                 }
             }
         }
 
-        registeredService.name = serviceName
         return registeredService
     }
 

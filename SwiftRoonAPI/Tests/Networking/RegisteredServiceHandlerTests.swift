@@ -13,21 +13,20 @@ final class RegisteredServiceHandlerTests: XCTestCase {
     func testSendContinueAll() {
         // Given
         let subservice = "subscribe_pairing"
-        let subservices: RegisteredSubservices = [
-            subservice: [
-                1: [
-                    "string2": .init(message: .init(requestID: 1, verb: .request, name: .continueChanged))
-                ]
-            ]
-        ]
+        let service: RegisteredService = RegisteredService(name: subservice)
         let transport = _MooTransportMock()
         let moo = Moo(transport: transport)
         let name = "name"
         let body = "data".data(using: .utf8)
 
+        service.register(handler: .init(message: .init(requestID: 1, verb: .request, name: .continueChanged)),
+                         subscriptionName: subservice,
+                         mooID: 1,
+                         subscriptionKey: "string2")
+
         // When
         RegisteredServiceHandler.sendContinueAll(
-            subservices: subservices,
+            service: service,
             moo: moo,
             subservice: subservice,
             name: name,
