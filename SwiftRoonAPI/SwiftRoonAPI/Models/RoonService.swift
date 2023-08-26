@@ -1,5 +1,5 @@
 //
-//  RegisteredService.swift
+//  RoonService.swift
 //  
 //
 //  Created by Alejandro Maya on 25/06/23.
@@ -7,7 +7,7 @@
 
 import Foundation
 
-open class RegisteredService {
+open class RoonService {
 
     public private(set) var name: String
     private var subservices: SubserviceRegistry

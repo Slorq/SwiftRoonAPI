@@ -13,7 +13,7 @@ final class RegisteredServiceHandlerTests: XCTestCase {
     func testSendContinueAll() {
         // Given
         let subservice = "subscribe_pairing"
-        let service: RegisteredService = RegisteredService(name: subservice)
+        let service: RoonService = RoonService(name: subservice)
         let transport = _MooTransportMock()
         let moo = Moo(transport: transport)
         let name = "name"

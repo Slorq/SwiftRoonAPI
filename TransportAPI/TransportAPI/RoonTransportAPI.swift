@@ -18,7 +18,7 @@ extension RoonServiceName {
     static let transport = "com.roonlabs.transport:2"
 }
 
-public class RoonTransportAPI: RegisteredService {
+public class RoonTransportAPI: RoonService {
 
     public convenience init() {
         self.init(name: .transport)

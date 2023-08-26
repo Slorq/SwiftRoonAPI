@@ -134,7 +134,7 @@ final class SwiftRoonAPITests: XCTestCase {
 
         // When
         XCTAssertThrowsError(
-            try roonAPI.initServices(requiredServices: [RegisteredService(name: "ServiceName")])
+            try roonAPI.registerServices(requiredServices: [RoonService(name: "ServiceName")])
         ) { error in
             // Then
             XCTAssertEqual(error as? RoonAPIError, RoonAPIError.unableToInitServices(details: "Roon Extensions options has required or optional services, but has neither corePaired nor coreFound."))
@@ -148,7 +148,7 @@ final class SwiftRoonAPITests: XCTestCase {
 
         // When
         XCTAssertThrowsError(
-            try roonAPI.initServices(requiredServices: [RegisteredService(name: "ServiceName")])
+            try roonAPI.registerServices(requiredServices: [RoonService(name: "ServiceName")])
         ) { error in
             // Then
             XCTAssertEqual(error as? RoonAPIError, RoonAPIError.unableToInitServices(details: "Roon Extensions options has required or optional services, but has neither corePaired nor coreFound."))
@@ -160,7 +160,7 @@ final class SwiftRoonAPITests: XCTestCase {
         roonAPI.corePaired = { core in }
 
         // When
-        try roonAPI.initServices()
+        try roonAPI.registerServices()
 
         // Then
         XCTAssertNotNil(roonAPI.testHooks.pairingService)

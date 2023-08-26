@@ -29,7 +29,7 @@ public final class RoonAPI {
     private var roonSettings = RoonSettings()
     private var scanCount = 0
     private var serviceRequestHandlers: [String: (_Moo, MooMessage?) -> Void] = [:]
-    private var registeredServices: ([RegisteredService], [RegisteredService], [RegisteredService])?
+    private var registeredServices: ([RoonService], [RoonService], [RoonService])?
     private var sood: _Sood
     private var soodConnections: [String: _Moo] = [:]
     public var coreFound: RoonCoreCompletionHandler?
@@ -59,9 +59,9 @@ public final class RoonAPI {
         sood.start { [weak self] in self?.onSoodStart() }
     }
 
-    public func initServices(optionalServices: [RegisteredService] = [],
-                             requiredServices: [RegisteredService] = [],
-                             providedServices: [RegisteredService] = []) throws {
+    public func registerServices(optionalServices: [RoonService] = [],
+                                 requiredServices: [RoonService] = [],
+                                 providedServices: [RoonService] = []) throws {
         logger.log(level: .info,
                    logMessage(optionalServices: optionalServices,
                               requiredServices: requiredServices,
@@ -97,16 +97,16 @@ public final class RoonAPI {
         self.registeredServices = (optionalServices, requiredServices, providedServices)
     }
 
-    public func registerService(serviceName: String,
-                                subscriptions: [Subscription] = [],
-                                handlers: ServiceMethodHandlers) -> RegisteredService {
+    private func registerService(serviceName: String,
+                                 subscriptions: [Subscription] = [],
+                                 handlers: ServiceMethodHandlers) -> RoonService {
         logger.log(level: .info, "Registering service \(serviceName)")
         var mutableHandlers = handlers
-        let registeredService = RegisteredService(name: serviceName)
+        let registeredService = RoonService(name: serviceName)
 
         subscriptions.forEach { subscription in
-            let subname = subscription.subscribeName
-            mutableHandlers[subname] = { moo, request in
+            let subscribeName = subscription.subscribeName
+            mutableHandlers[subscribeName] = { moo, request in
                 guard let body = request.body,
                       let subscriptionBody = try? JSONDecoder.default.decode(SubscriptionBody.self, from: body) else {
                     assertionFailure("Unable to decode subscriptionBody")
@@ -117,12 +117,12 @@ public final class RoonAPI {
                 let originalSendComplete = subscriptionMessageHandler.sendComplete
                 subscriptionMessageHandler.sendComplete = { moo, name, body, message in
                     originalSendComplete(moo, name, body, message)
-                    registeredService.remove(subserviceName: subname, mooID: moo.mooID, subscriptionKey: subscriptionBody.subscriptionKey)
+                    registeredService.remove(subserviceName: subscribeName, mooID: moo.mooID, subscriptionKey: subscriptionBody.subscriptionKey)
                 }
                 subscription.start(moo, request)
                 registeredService.register(
                     handler: subscriptionMessageHandler,
-                    subscriptionName: subname,
+                    subscriptionName: subscribeName,
                     mooID: moo.mooID,
                     subscriptionKey: subscriptionBody.subscriptionKey
                 )
@@ -135,7 +135,7 @@ public final class RoonAPI {
                     return
                 }
 
-                registeredService.remove(subserviceName: subname, mooID: moo.mooID, subscriptionKey: subscriptionBody.subscriptionKey)
+                registeredService.remove(subserviceName: subscribeName, mooID: moo.mooID, subscriptionKey: subscriptionBody.subscriptionKey)
                 subscription.end?()
                 moo.sendComplete(.unsubscribed, message: request)
             }
@@ -374,9 +374,9 @@ public final class RoonAPI {
         }
     }
 
-    private func logMessage(optionalServices: [RegisteredService],
-                            requiredServices: [RegisteredService],
-                            providedServices: [RegisteredService]) -> String {
+    private func logMessage(optionalServices: [RoonService],
+                            requiredServices: [RoonService],
+                            providedServices: [RoonService]) -> String {
         var logMessage = "Initializing services\n"
         if !optionalServices.isEmpty {
             logMessage.append("\tOptional: \(optionalServices)\n")
