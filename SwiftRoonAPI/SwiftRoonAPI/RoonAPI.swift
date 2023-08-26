@@ -24,7 +24,7 @@ public final class RoonAPI {
     private var extensionDetailsPayload: RoonExtensionCompleteDetails
     private var isPaired = false
     private var pairedCore: RoonCore?
-    private var pairingService: PairingServiceRegistry?
+    private var pairingService: PairingService?
     private var periodicScanSubscription: AnyCancellable?
     private var roonSettings = RoonSettings()
     private var scanCount = 0
@@ -122,7 +122,7 @@ public final class RoonAPI {
                 subscription.start(moo, request)
                 registeredService.register(
                     handler: subscriptionMessageHandler,
-                    subscriptionName: subscribeName,
+                    subserviceName: subscribeName,
                     mooID: moo.mooID,
                     subscriptionKey: subscriptionBody.subscriptionKey
                 )
@@ -202,36 +202,37 @@ public final class RoonAPI {
             ]
         )
 
-        pairingService = .init(services: [service],
-                               foundCore: { [weak self] core in
-            guard let self else { return }
-            if self.pairedCore == nil {
-                self.roonSettings.pairedCoreID = core.coreID
+        pairingService = .init(
+            service: service,
+            foundCore: { [weak self] core in
+                guard let self else { return }
+                if self.pairedCore == nil {
+                    self.roonSettings.pairedCoreID = core.coreID
 
-                self.pairedCore = core
-                self.isPaired = true
+                    self.pairedCore = core
+                    self.isPaired = true
 
-                let pairedCore = PairedCore(coreID: core.coreID)
-                let body = try? pairedCore.jsonEncoded()
-                body.map {
-                    RegisteredServiceHandler.sendContinueAll(service: service,
-                                                             moo: core.moo,
-                                                             subservice: "subscribe_pairing",
-                                                             name: "Changed",
-                                                             body: $0)
+                    let pairedCore = PairedCore(coreID: core.coreID)
+                    let body = try? pairedCore.jsonEncoded()
+                    body.map {
+                        service.sendContinueAll(moo: core.moo,
+                                                subservice: "subscribe_pairing",
+                                                name: "Changed",
+                                                body: $0)
+                    }
                 }
+                if core.coreID == self.pairedCore?.coreID {
+                    self.corePaired?(core)
+                }
+            },
+            lostCore: { [weak self] core in
+                guard let self else { return }
+                if core.coreID == self.pairedCore?.coreID {
+                    self.isPaired = false
+                }
+                self.coreUnpaired?(core)
             }
-            if core.coreID == self.pairedCore?.coreID {
-                self.corePaired?(core)
-            }
-        },
-                               lostCore: { [weak self] core in
-            guard let self else { return }
-            if core.coreID == self.pairedCore?.coreID {
-                self.isPaired = false
-            }
-            self.coreUnpaired?(core)
-        })
+        )
     }
 
     private func periodicScan() {
@@ -418,7 +419,7 @@ extension RoonAPI {
             self.roonAPI = roonAPI
         }
 
-        var pairingService: PairingServiceRegistry? { roonAPI.pairingService }
+        var pairingService: PairingService? { roonAPI.pairingService }
         var soodConnections: [String: _Moo] { roonAPI.soodConnections }
 
     }

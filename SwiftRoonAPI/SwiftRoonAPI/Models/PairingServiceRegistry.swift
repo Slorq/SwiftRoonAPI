@@ -8,14 +8,14 @@
 import Foundation
 import SwiftRoonAPICore
 
-class PairingServiceRegistry {
+class PairingService {
 
-    let services: [RoonService]
+    let service: RoonService
     let foundCore: (RoonCore) -> Void
     let lostCore: (RoonCore) -> Void
 
-    init(services: [RoonService], foundCore: @escaping (RoonCore) -> Void, lostCore: @escaping (RoonCore) -> Void) {
-        self.services = services
+    init(service: RoonService, foundCore: @escaping (RoonCore) -> Void, lostCore: @escaping (RoonCore) -> Void) {
+        self.service = service
         self.foundCore = foundCore
         self.lostCore = lostCore
     }

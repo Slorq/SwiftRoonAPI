@@ -6,77 +6,83 @@
 //
 
 import Foundation
+import SwiftRoonAPICore
 
 open class RoonService {
 
-    public private(set) var name: String
-    private var subservices: SubserviceRegistry
+    private(set) var name: String
+    private var serviceSubscriptionHandlers: [String: SubscriptionHandlers]
 
     public init(name: String) {
         self.name = name
-        self.subservices = .init()
+        self.serviceSubscriptionHandlers = .init()
     }
 
-    func handlers(for name: String) -> [Int: [String: SubscriptionMessageHandler]]? {
-        subservices.registeredHandlers[name]
+    func handler(subservice name: String,
+                 mooID: Int,
+                 subscriptionKey: String) -> SubscriptionMessageHandler? {
+        serviceSubscriptionHandlers[name]?.handler(mooID: mooID, subscriptionKey: subscriptionKey)
+    }
+
+    func sendContinueAll(moo: _Moo, subservice: String, name: String, body: Data?) {
+        guard let subservice = serviceSubscriptionHandlers[subservice]?.handlers() else {
+            return
+        }
+
+        subservice.forEach { _, subscriptionHandlers in
+            subscriptionHandlers.forEach({ _, subscriptionHandler in
+                subscriptionHandler.sendContinue(moo, name, body, subscriptionHandler.message)
+            })
+        }
     }
 
     func register(handler: SubscriptionMessageHandler,
-                  subscriptionName name: String,
+                  subserviceName name: String,
                   mooID: Int,
                   subscriptionKey: String) {
-        if subservices.registeredHandlers[name] == nil {
-            subservices.registeredHandlers[name] = [:]
+        if serviceSubscriptionHandlers[name] == nil {
+            serviceSubscriptionHandlers[name] = .init()
         }
 
-        if subservices.registeredHandlers[name]?[mooID] == nil {
-            subservices.registeredHandlers[name]?[mooID] = [:]
-        }
-
-        subservices.registeredHandlers[name]?[mooID]?[subscriptionKey] = handler
+        serviceSubscriptionHandlers[name]?.register(handler: handler, mooID: mooID, subscriptionKey: subscriptionKey)
     }
 
     func remove(subserviceName name: String, mooID: Int, subscriptionKey: String) {
-        subservices.registeredHandlers[name]?[mooID]?[subscriptionKey] = nil
+        serviceSubscriptionHandlers[name]?.removeHandler(for: mooID, subscriptionKey: subscriptionKey)
     }
 
     func remove(subserviceName name: String, mooID: Int) {
-        subservices.registeredHandlers[name]?[mooID] = nil
+        serviceSubscriptionHandlers[name]?.removeHandlers(for: mooID)
     }
 }
 
-class SubserviceRegistry {
+private class SubscriptionHandlers {
 
-    fileprivate var registeredHandlers: [String: [Int: [String: SubscriptionMessageHandler]]] = [:]
+    private var registeredHandlers: [Int: [String: SubscriptionMessageHandler]] = [:]
 
-    public init() {
+    func handlers() -> [Int: [String: SubscriptionMessageHandler]]? {
+        registeredHandlers
     }
 
-    func handlers(for name: String) -> [Int: [String: SubscriptionMessageHandler]]? {
-        registeredHandlers[name]
+    func handler(mooID: Int, subscriptionKey: String) -> SubscriptionMessageHandler? {
+        registeredHandlers[mooID]?[subscriptionKey]
     }
 
     func register(handler: SubscriptionMessageHandler,
-                  subscriptionName name: String,
                   mooID: Int,
                   subscriptionKey: String) {
-        if registeredHandlers[name] == nil {
-            registeredHandlers[name] = [:]
+        if registeredHandlers[mooID] == nil {
+            registeredHandlers[mooID] = [:]
         }
 
-        if registeredHandlers[name]?[mooID] == nil {
-            registeredHandlers[name]?[mooID] = [:]
-        }
-
-        registeredHandlers[name]?[mooID]?[subscriptionKey] = handler
+        registeredHandlers[mooID]?[subscriptionKey] = handler
     }
 
-    func remove(subserviceName name: String, mooID: Int, subscriptionKey: String) {
-        registeredHandlers[name]?[mooID]?[subscriptionKey] = nil
+    func removeHandler(for mooID: Int, subscriptionKey: String) {
+        registeredHandlers[mooID]?[subscriptionKey] = nil
     }
 
-    func remove(subserviceName name: String, mooID: Int) {
-        registeredHandlers[name]?[mooID] = nil
+    func removeHandlers(for mooID: Int) {
+        registeredHandlers[mooID] = nil
     }
-
 }

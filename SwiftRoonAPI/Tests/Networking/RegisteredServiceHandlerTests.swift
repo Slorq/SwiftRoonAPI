@@ -8,7 +8,7 @@
 @testable import SwiftRoonAPI
 import XCTest
 
-final class RegisteredServiceHandlerTests: XCTestCase {
+final class RoonServiceTests: XCTestCase {
 
     func testSendContinueAll() {
         // Given
@@ -25,8 +25,7 @@ final class RegisteredServiceHandlerTests: XCTestCase {
                          subscriptionKey: "string2")
 
         // When
-        RegisteredServiceHandler.sendContinueAll(
-            service: service,
+        service.sendContinueAll(
             moo: moo,
             subservice: subservice,
             name: name,
