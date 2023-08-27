@@ -317,23 +317,21 @@ public final class RoonAPI {
             }
         }
         moo.onClose = { [weak self] moo in
-            guard let self else { return }
-            self.logger.log("moo.onClose")
-            self.serviceRequestHandlers.forEach { key, handler in
+            self?.logger.log("moo.onClose")
+            self?.serviceRequestHandlers.forEach { key, handler in
                 handler(moo, nil)
             }
             moo.cleanUp()
             onClose()
         }
         moo.onMessage = { [weak self] moo, message in
-            guard let self else { return }
             let body = message.body
 
             if message.verb == .request {
                 let stringBody = body.flatMap { String(data: $0, encoding: .utf8) } ?? ""
-                self.logger.log("API 1 <- \(message.verb) \(message.requestID) \(message.service ?? "") / \(message.name) \(stringBody)")
+                self?.logger.log("API 1 <- \(message.verb) \(message.requestID) \(message.service ?? "") / \(message.name) \(stringBody)")
                 if let service = message.service,
-                    let handler = self.serviceRequestHandlers[service] {
+                    let handler = self?.serviceRequestHandlers[service] {
                     handler(moo, message)
                 } else {
                     let bodyString = "{ \"error\": \"unknown service: \(message.service ?? "")\" }"
@@ -341,7 +339,7 @@ public final class RoonAPI {
                 }
             } else {
                 let stringBody = body.flatMap { String(data: $0, encoding: .utf8) } ?? ""
-                self.logger.log("API 2 <- \(message.verb) \(message.requestID) \(message.name) \(stringBody)")
+                self?.logger.log("API 2 <- \(message.verb) \(message.requestID) \(message.name) \(stringBody)")
                 if !moo.handleMessage(message: message) {
                     moo.close()
                 }
@@ -421,10 +419,11 @@ extension RoonAPI {
             self.roonAPI = roonAPI
         }
 
+        var mooTransportFactory: _MooTransportFactory { roonAPI.mooTransportFactory }
         var pairingService: PairingService? { roonAPI.pairingService }
+        var serviceRequestHandlers: [String: (_Moo, MooMessage?) -> Void] { roonAPI.serviceRequestHandlers }
         var sood: _Sood { roonAPI.sood }
         var soodConnections: [String: Moo] { roonAPI.soodConnections }
-        var mooTransportFactory: _MooTransportFactory { roonAPI.mooTransportFactory }
     }
 }
 #endif

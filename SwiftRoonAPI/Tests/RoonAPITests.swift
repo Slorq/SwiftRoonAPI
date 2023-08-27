@@ -153,6 +153,8 @@ final class SwiftRoonAPITests: XCTestCase {
         createSoodConnection()
         let moo = try XCTUnwrap(roonAPI.testHooks.soodConnections.first?.value)
         let transport = try XCTUnwrap(moo.testHooks.transport as? _MooTransportMock)
+        XCTAssertNotNil(roonAPI.testHooks.serviceRequestHandlers["com.roonlabs.ping:1"])
+        XCTAssertNotNil(roonAPI.testHooks.serviceRequestHandlers["com.roonlabs.pairing:1"])
 
         // When
         moo.onOpen?(moo)
@@ -224,16 +226,16 @@ final class SwiftRoonAPITests: XCTestCase {
         // Given
         try roonAPI.registerServices()
         createSoodConnection()
-        let soodConnection = try XCTUnwrap(roonAPI.testHooks.soodConnections.first)
-        let mooTransport = try MooTransport(host: "192.168.1.26", port: 55000)
+        let moo = try XCTUnwrap(roonAPI.testHooks.soodConnections.first?.value)
+        let mooTransport = try XCTUnwrap(moo.testHooks.transport as? _MooTransportMock)
         let pingMessage = "MOO/1 REQUEST com.roonlabs.ping:1/ping\nLogging: quiet\nRequest-Id: 1\n\n"
         let data = try XCTUnwrap(pingMessage.data(using: .utf8))
 
         // When
-        soodConnection.value.transport(mooTransport, didReceiveData: data)
+        moo.transport(mooTransport, didReceiveData: data)
 
         // Then
-        let sentData = try XCTUnwrap((soodConnection.value.testHooks.transport as? _MooTransportMock)?.sendDataReceivedData)
+        let sentData = try XCTUnwrap(mooTransport.sendDataReceivedData)
         let sentMessage = try XCTUnwrap(String(data: sentData, encoding: .utf8))
         XCTAssertEqual(sentMessage, "MOO/1 COMPLETE Success\nRequest-Id: 1\n\n")
     }
@@ -244,20 +246,37 @@ final class SwiftRoonAPITests: XCTestCase {
             RoonService(name: "ProvidedService1")
         ])
         createSoodConnection()
-        let soodConnection = try XCTUnwrap(roonAPI.testHooks.soodConnections.first)
-        let mooTransport = try MooTransport(host: "192.168.1.26", port: 55000)
+        let moo = try XCTUnwrap(roonAPI.testHooks.soodConnections.first?.value)
         let unrecognizedSubservice = "pong"
         let message = "MOO/1 REQUEST com.roonlabs.ping:1/\(unrecognizedSubservice)\nRequest-Id: 1\n\n"
         let data = try XCTUnwrap(message.data(using: .utf8))
 
         // When
-        soodConnection.value.transport(mooTransport, didReceiveData: data)
+        moo.transport(moo.testHooks.transport, didReceiveData: data)
 
         // Then
-        let sentData = try XCTUnwrap((soodConnection.value.testHooks.transport as? _MooTransportMock)?.sendDataReceivedData)
+        let sentData = try XCTUnwrap((moo.testHooks.transport as? _MooTransportMock)?.sendDataReceivedData)
         let sentMessage = try XCTUnwrap(String(data: sentData, encoding: .utf8))
         XCTAssertEqual(sentMessage, "MOO/1 COMPLETE InvalidRequest\nRequest-Id: 1\n\n")
     }
+
+    func testOnSoodConnectionClose() throws {
+        // Given
+        try roonAPI.registerServices()
+        createSoodConnection()
+        let moo = try XCTUnwrap(roonAPI.testHooks.soodConnections.first?.value)
+        XCTAssertFalse(roonAPI.testHooks.soodConnections.isEmpty)
+
+        // When
+        moo.transportDidClose(moo.testHooks.transport)
+
+        // Then
+        XCTAssertTrue(roonAPI.testHooks.soodConnections.isEmpty)
+    }
+
+}
+
+extension SwiftRoonAPITests {
 
     private func createSoodConnection() {
         sood.onMessage?(SoodMessage(props: SoodMessage.Props(serviceId: "00720724-5143-4a9b-abac-0e50cba674bb",
@@ -272,5 +291,4 @@ final class SwiftRoonAPITests: XCTestCase {
                                                            port: 50942),
                                     type: "R"))
     }
-
 }
