@@ -411,6 +411,7 @@ extension RoonAPI {
 
         var mooTransportFactory: _MooTransportFactory { roonAPI.mooTransportFactory }
         var pairingService: PairingService? { roonAPI.pairingService }
+        var roonSettings: RoonSettings { roonAPI.roonSettings }
         var serviceRequestHandlers: [String: (_Moo, MooMessage?) -> Void] { roonAPI.serviceRequestHandlers }
         var sood: _Sood { roonAPI.sood }
         var soodConnections: [String: Moo] { roonAPI.soodConnections }

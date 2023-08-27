@@ -30,6 +30,8 @@ final class SwiftRoonAPITests: XCTestCase {
         sood = _SoodMock()
         sood.underlyingIsStarted = false
         roonAPI = RoonAPI(details: details, sood: sood, mooTransportFactory: MooTransportMockFactory())
+        var roonSettings = roonAPI.testHooks.roonSettings
+        roonSettings.roonState = nil
         super.setUp()
     }
 
@@ -163,7 +165,9 @@ final class SwiftRoonAPITests: XCTestCase {
         XCTAssertEqual(transport.sendDataCallsCount, 1)
         XCTAssertEqual(transport.sendDataReceivedData,
                        "MOO/1 REQUEST com.roonlabs.registry:1/info\nRequest-Id: 0\n\n".data(using: .utf8))
-        let infoResponse = try XCTUnwrap("MOO/1 COMPLETE Success\nContent-Type: application/json\nRequest-Id: 0\nContent-Length: 138\n\n{\"core_id\":\"fc519bd4-30c9-4e38-b8ea-53f5816ba75e\",\"display_name\":\"Alejandros-MacBook-Pro\",\"display_version\":\"2.0 (build 1303) production\"}".data(using: .utf8))
+        let infoResponse = try XCTUnwrap(
+            "MOO/1 COMPLETE Success\nContent-Type: application/json\nRequest-Id: 0\nContent-Length: 138\n\n{\"core_id\":\"fc519bd4-30c9-4e38-b8ea-53f5816ba75e\",\"display_name\":\"Alejandros-MacBook-Pro\",\"display_version\":\"2.0 (build 1303) production\"}".data(using: .utf8)
+        )
         moo.transport(transport, didReceiveData: infoResponse)
         XCTAssertEqual(transport.sendDataCallsCount, 2)
         let sentData = try XCTUnwrap(transport.sendDataReceivedData)
@@ -181,6 +185,19 @@ final class SwiftRoonAPITests: XCTestCase {
         XCTAssertTrue(sentString.contains("\"display_name\":\"DisplayName\""))
         XCTAssertTrue(sentString.contains("\"extension_id\":\"ExtensionID\""))
         XCTAssertTrue(sentString.contains("\"display_version\":\"DisplayVersion\""))
+
+        let expectation = expectation(description: "coreFound should be called")
+        roonAPI.coreFound = { _ in
+            expectation.fulfill()
+        }
+        let registerResponse = try XCTUnwrap(
+            "MOO/1 CONTINUE Registered\nContent-Type: application/json\nRequest-Id: 1\nContent-Length: 280\n\n{\"core_id\":\"fc519bd4-30c9-4e38-b8ea-53f5816ba75e\",\"display_name\":\"Alejandros-MacBook-Pro\",\"display_version\":\"2.0 (build 1303) production\",\"token\":\"78853ef6-e1f7-4d84-902d-88e0cdd60b05\",\"provided_services\":[\"com.roonlabs.transport:2\"],\"http_port\":9300,\"extension_host\":\"127.0.0.1\"}".data(using: .utf8)
+        )
+        moo.transport(transport, didReceiveData: registerResponse)
+        XCTAssertNotNil(moo.core)
+        XCTAssertEqual(roonAPI.testHooks.roonSettings.roonState,
+                       RoonAuthorizationState(tokens: ["fc519bd4-30c9-4e38-b8ea-53f5816ba75e": "78853ef6-e1f7-4d84-902d-88e0cdd60b05"]))
+        waitForExpectations(timeout: 0.1)
     }
 
     func testInitRequiredServicesWithoutCorePairedOrFoundThrowsError() {
@@ -292,6 +309,25 @@ final class SwiftRoonAPITests: XCTestCase {
 
         // Then
         XCTAssertTrue(roonAPI.testHooks.soodConnections.isEmpty)
+    }
+
+    func testOnSoodError() throws {
+        // Given
+        let error = NSError(domain: "SomeError", code: 1)
+        createSoodConnection()
+        let moo = try XCTUnwrap(roonAPI.testHooks.soodConnections.first?.value)
+
+        let expectation = expectation(description: "onError should be called")
+        roonAPI.onError = { receivedError in
+            XCTAssertEqual(receivedError as NSError, error)
+            expectation.fulfill()
+        }
+
+        // When
+        moo.transport(moo.testHooks.transport, didReceiveError: error)
+
+        // Then
+        waitForExpectations(timeout: 0.1)
     }
 
 }
