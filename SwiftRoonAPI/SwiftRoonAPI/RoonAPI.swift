@@ -20,6 +20,7 @@ public final class RoonAPI {
     public typealias RoonCoreCompletionHandler = (RoonCore) -> Void
     public typealias RoonErrorCompletionHandler = (Error) -> Void
 
+    private let mooTransportFactory: _MooTransportFactory
     private let logger = Logger()
     private var extensionDetailsPayload: RoonExtensionCompleteDetails
     private var isPaired = false
@@ -31,7 +32,7 @@ public final class RoonAPI {
     private var serviceRequestHandlers: [String: (_Moo, MooMessage?) -> Void] = [:]
     private var registeredServices: ([RoonService], [RoonService], [RoonService])?
     private var sood: _Sood
-    private var soodConnections: [String: _Moo] = [:]
+    private var soodConnections: [String: Moo] = [:]
     public var coreFound: RoonCoreCompletionHandler?
     public var coreLost: RoonCoreCompletionHandler?
     public var corePaired: RoonCoreCompletionHandler?
@@ -39,10 +40,11 @@ public final class RoonAPI {
     public var onError: RoonErrorCompletionHandler?
 
     public convenience init(details: RoonExtensionDetails) {
-        self.init(details: details, sood: Sood())
+        self.init(details: details, sood: Sood(), mooTransportFactory: MooTransportFactory())
     }
 
-    init(details: RoonExtensionDetails, sood: _Sood) {
+    init(details: RoonExtensionDetails, sood: _Sood, mooTransportFactory: _MooTransportFactory) {
+        self.mooTransportFactory = mooTransportFactory
         self.extensionDetailsPayload = RoonExtensionCompleteDetails(details: details)
         self.sood = sood
         self.sood.onMessage = { [weak self] in self?.onSoodMessage($0) }
@@ -287,9 +289,9 @@ public final class RoonAPI {
     private func wsConnect(hostIP: String,
                            httpPort: UInt16,
                            onClose: @escaping () -> Void,
-                           onError: @escaping (Error) -> Void) -> _Moo {
+                           onError: @escaping (Error) -> Void) -> Moo {
         logger.log("Sood WS Connect \(hostIP):\(httpPort)")
-        let transport = try! MooTransport(host: hostIP, port: httpPort)
+        let transport = try! mooTransportFactory.make(host: hostIP, port: httpPort)
         let moo = Moo(transport: transport)
 
         moo.onOpen = { [weak self] moo in
@@ -420,8 +422,9 @@ extension RoonAPI {
         }
 
         var pairingService: PairingService? { roonAPI.pairingService }
-        var soodConnections: [String: _Moo] { roonAPI.soodConnections }
-
+        var sood: _Sood { roonAPI.sood }
+        var soodConnections: [String: Moo] { roonAPI.soodConnections }
+        var mooTransportFactory: _MooTransportFactory { roonAPI.mooTransportFactory }
     }
 }
 #endif

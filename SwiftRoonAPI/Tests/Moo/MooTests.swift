@@ -31,7 +31,7 @@ final class MooTests: XCTestCase {
 
     func testSendingRequestCallsSendAndStoresRequestHandler() {
         // Given
-        let requestID = moo.hooks.requestID
+        let requestID = moo.testHooks.requestID
 
         // When
         moo.sendRequest(name: "requestName") { _ in }
@@ -39,13 +39,13 @@ final class MooTests: XCTestCase {
         // Then
         XCTAssertTrue(transport.sendDataCalled)
         XCTAssertEqual(transport.sendDataCallsCount, 1)
-        XCTAssertEqual(moo.hooks.requestHandlers.count, 1)
-        XCTAssertEqual(moo.hooks.requestID, requestID + 1)
+        XCTAssertEqual(moo.testHooks.requestHandlers.count, 1)
+        XCTAssertEqual(moo.testHooks.requestID, requestID + 1)
     }
 
     func testSendingCompleteCallsSendAndStoresRequestHandler() {
         // Given
-        let requestID = moo.hooks.requestID
+        let requestID = moo.testHooks.requestID
 
         // When
         moo.sendComplete(
@@ -55,13 +55,13 @@ final class MooTests: XCTestCase {
         // Then
         XCTAssertTrue(transport.sendDataCalled)
         XCTAssertEqual(transport.sendDataCallsCount, 1)
-        XCTAssertEqual(moo.hooks.requestHandlers.count, 1)
-        XCTAssertEqual(moo.hooks.requestID, requestID + 1)
+        XCTAssertEqual(moo.testHooks.requestHandlers.count, 1)
+        XCTAssertEqual(moo.testHooks.requestID, requestID + 1)
     }
 
     func testSendingContinueCallsSendAndStoresRequestHandler() {
         // Given
-        let requestID = moo.hooks.requestID
+        let requestID = moo.testHooks.requestID
 
         // When
         moo.sendContinue(
@@ -71,13 +71,13 @@ final class MooTests: XCTestCase {
         // Then
         XCTAssertTrue(transport.sendDataCalled)
         XCTAssertEqual(transport.sendDataCallsCount, 1)
-        XCTAssertEqual(moo.hooks.requestHandlers.count, 1)
-        XCTAssertEqual(moo.hooks.requestID, requestID + 1)
+        XCTAssertEqual(moo.testHooks.requestHandlers.count, 1)
+        XCTAssertEqual(moo.testHooks.requestID, requestID + 1)
     }
 
     func testSendingSubscribeHelperCallsSendAndStoresRequestHandler() {
         // Given
-        let requestID = moo.hooks.requestID
+        let requestID = moo.testHooks.requestID
 
         // When
         moo.subscribeHelper(
@@ -88,8 +88,8 @@ final class MooTests: XCTestCase {
         // Then
         XCTAssertTrue(transport.sendDataCalled)
         XCTAssertEqual(transport.sendDataCallsCount, 1)
-        XCTAssertEqual(moo.hooks.requestHandlers.count, 1)
-        XCTAssertEqual(moo.hooks.requestID, requestID + 1)
+        XCTAssertEqual(moo.testHooks.requestHandlers.count, 1)
+        XCTAssertEqual(moo.testHooks.requestID, requestID + 1)
     }
 
     func testCleaningUpFinishesAndCleansRequestHandlers() {
@@ -110,14 +110,14 @@ final class MooTests: XCTestCase {
                 XCTFail("Shouldn't pass a non-nil message")
             }
         }
-        XCTAssertEqual(moo.hooks.requestHandlers.count, 2)
+        XCTAssertEqual(moo.testHooks.requestHandlers.count, 2)
 
         // When
         moo.cleanUp()
 
         // Then
         waitForExpectations(timeout: 1)
-        XCTAssertEqual(moo.hooks.requestHandlers.count, 0)
+        XCTAssertEqual(moo.testHooks.requestHandlers.count, 0)
     }
 
     func testWhenCloseIsCalledThenTransportIsClosed() {
@@ -138,7 +138,7 @@ final class MooTests: XCTestCase {
         }
 
         // When
-        moo.transportDidOpen(.make())
+        moo.transportDidOpen(_MooTransportMock())
 
         // Then
         waitForExpectations(timeout: 1)
@@ -152,7 +152,7 @@ final class MooTests: XCTestCase {
         }
 
         // When
-        moo.transportDidClose(.make())
+        moo.transportDidClose(_MooTransportMock())
 
         // Then
         waitForExpectations(timeout: 1)
@@ -168,7 +168,7 @@ final class MooTests: XCTestCase {
         }
 
         // When
-        moo.transport(.make(), didReceiveError: error)
+        moo.transport(_MooTransportMock(), didReceiveError: error)
 
         // Then
         waitForExpectations(timeout: 1)
@@ -184,7 +184,7 @@ final class MooTests: XCTestCase {
         }
 
         // When
-        moo.transport(.make(), didReceiveData: data)
+        moo.transport(_MooTransportMock(), didReceiveData: data)
 
         // Then
         waitForExpectations(timeout: 1)
@@ -204,7 +204,7 @@ final class MooTests: XCTestCase {
         }
 
         // When
-        moo.transport(.make(), didReceiveData: data)
+        moo.transport(_MooTransportMock(), didReceiveData: data)
 
         // Then
         waitForExpectations(timeout: 1)
@@ -220,7 +220,7 @@ final class MooTests: XCTestCase {
         }
 
         // When
-        moo.transport(.make(), didReceiveString: message)
+        moo.transport(_MooTransportMock(), didReceiveString: message)
 
         // Then
         waitForExpectations(timeout: 1)
@@ -241,7 +241,7 @@ final class MooTests: XCTestCase {
         }
 
         // When
-        moo.transport(.make(), didReceiveString: stringMessage)
+        moo.transport(_MooTransportMock(), didReceiveString: stringMessage)
 
         // Then
         waitForExpectations(timeout: 1)
@@ -276,7 +276,7 @@ final class MooTests: XCTestCase {
         // Then
         waitForExpectations(timeout: 1)
         XCTAssertTrue(result)
-        XCTAssertEqual(moo.hooks.requestHandlers.count, 1)
+        XCTAssertEqual(moo.testHooks.requestHandlers.count, 1)
     }
 
     func testHandleCompleteMessageRemovesHandler() {
@@ -297,15 +297,7 @@ final class MooTests: XCTestCase {
         // Then
         waitForExpectations(timeout: 1)
         XCTAssertTrue(result)
-        XCTAssertEqual(moo.hooks.requestHandlers.count, 0)
-    }
-
-}
-
-private extension MooTransport {
-
-    static func make() -> MooTransport {
-        return try! MooTransport(host: "localhost", port: 80)
+        XCTAssertEqual(moo.testHooks.requestHandlers.count, 0)
     }
 
 }

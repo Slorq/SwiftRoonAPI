@@ -46,11 +46,11 @@ class MooTransportDelegateMock: MooTransportDelegate {
     var transportDidOpenCalled: Bool {
         return transportDidOpenCallsCount > 0
     }
-    var transportDidOpenReceivedTransport: MooTransport?
-    var transportDidOpenReceivedInvocations: [MooTransport] = []
-    var transportDidOpenClosure: ((MooTransport) -> Void)?
+    var transportDidOpenReceivedTransport: _MooTransport?
+    var transportDidOpenReceivedInvocations: [_MooTransport] = []
+    var transportDidOpenClosure: ((_MooTransport) -> Void)?
 
-    func transportDidOpen(_ transport: MooTransport) {
+    func transportDidOpen(_ transport: _MooTransport) {
         transportDidOpenCallsCount += 1
         transportDidOpenReceivedTransport = transport
         transportDidOpenReceivedInvocations.append(transport)
@@ -63,11 +63,11 @@ class MooTransportDelegateMock: MooTransportDelegate {
     var transportDidCloseCalled: Bool {
         return transportDidCloseCallsCount > 0
     }
-    var transportDidCloseReceivedTransport: MooTransport?
-    var transportDidCloseReceivedInvocations: [MooTransport] = []
-    var transportDidCloseClosure: ((MooTransport) -> Void)?
+    var transportDidCloseReceivedTransport: _MooTransport?
+    var transportDidCloseReceivedInvocations: [_MooTransport] = []
+    var transportDidCloseClosure: ((_MooTransport) -> Void)?
 
-    func transportDidClose(_ transport: MooTransport) {
+    func transportDidClose(_ transport: _MooTransport) {
         transportDidCloseCallsCount += 1
         transportDidCloseReceivedTransport = transport
         transportDidCloseReceivedInvocations.append(transport)
@@ -80,11 +80,11 @@ class MooTransportDelegateMock: MooTransportDelegate {
     var transportDidReceiveErrorCalled: Bool {
         return transportDidReceiveErrorCallsCount > 0
     }
-    var transportDidReceiveErrorReceivedArguments: (transport: MooTransport, error: Error)?
-    var transportDidReceiveErrorReceivedInvocations: [(transport: MooTransport, error: Error)] = []
-    var transportDidReceiveErrorClosure: ((MooTransport, Error) -> Void)?
+    var transportDidReceiveErrorReceivedArguments: (transport: _MooTransport, error: Error)?
+    var transportDidReceiveErrorReceivedInvocations: [(transport: _MooTransport, error: Error)] = []
+    var transportDidReceiveErrorClosure: ((_MooTransport, Error) -> Void)?
 
-    func transport(_ transport: MooTransport, didReceiveError error: Error) {
+    func transport(_ transport: _MooTransport, didReceiveError error: Error) {
         transportDidReceiveErrorCallsCount += 1
         transportDidReceiveErrorReceivedArguments = (transport: transport, error: error)
         transportDidReceiveErrorReceivedInvocations.append((transport: transport, error: error))
@@ -97,11 +97,11 @@ class MooTransportDelegateMock: MooTransportDelegate {
     var transportDidReceiveDataCalled: Bool {
         return transportDidReceiveDataCallsCount > 0
     }
-    var transportDidReceiveDataReceivedArguments: (transport: MooTransport, data: Data)?
-    var transportDidReceiveDataReceivedInvocations: [(transport: MooTransport, data: Data)] = []
-    var transportDidReceiveDataClosure: ((MooTransport, Data) -> Void)?
+    var transportDidReceiveDataReceivedArguments: (transport: _MooTransport, data: Data)?
+    var transportDidReceiveDataReceivedInvocations: [(transport: _MooTransport, data: Data)] = []
+    var transportDidReceiveDataClosure: ((_MooTransport, Data) -> Void)?
 
-    func transport(_ transport: MooTransport, didReceiveData data: Data) {
+    func transport(_ transport: _MooTransport, didReceiveData data: Data) {
         transportDidReceiveDataCallsCount += 1
         transportDidReceiveDataReceivedArguments = (transport: transport, data: data)
         transportDidReceiveDataReceivedInvocations.append((transport: transport, data: data))
@@ -114,11 +114,11 @@ class MooTransportDelegateMock: MooTransportDelegate {
     var transportDidReceiveStringCalled: Bool {
         return transportDidReceiveStringCallsCount > 0
     }
-    var transportDidReceiveStringReceivedArguments: (transport: MooTransport, string: String)?
-    var transportDidReceiveStringReceivedInvocations: [(transport: MooTransport, string: String)] = []
-    var transportDidReceiveStringClosure: ((MooTransport, String) -> Void)?
+    var transportDidReceiveStringReceivedArguments: (transport: _MooTransport, string: String)?
+    var transportDidReceiveStringReceivedInvocations: [(transport: _MooTransport, string: String)] = []
+    var transportDidReceiveStringClosure: ((_MooTransport, String) -> Void)?
 
-    func transport(_ transport: MooTransport, didReceiveString string: String) {
+    func transport(_ transport: _MooTransport, didReceiveString string: String) {
         transportDidReceiveStringCallsCount += 1
         transportDidReceiveStringReceivedArguments = (transport: transport, string: string)
         transportDidReceiveStringReceivedInvocations.append((transport: transport, string: string))

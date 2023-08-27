@@ -10,17 +10,28 @@ import Foundation
 import SwiftLogger
 import SwiftRoonAPICore
 
+protocol _MooTransportFactory {
+    func make(host: String, port: UInt16) throws -> _MooTransport
+}
+
+struct MooTransportFactory: _MooTransportFactory {
+
+    func make(host: String, port: UInt16) throws -> _MooTransport {
+        try MooTransport(host: host, port: port)
+    }
+}
+
 enum MooTransportError: Error {
     case invalidURL
     case unknownSocketResponse
 }
 
 protocol MooTransportDelegate: AnyObject, AutoMockable {
-    func transportDidOpen(_ transport: MooTransport)
-    func transportDidClose(_ transport: MooTransport)
-    func transport(_ transport: MooTransport, didReceiveError error: Error)
-    func transport(_ transport: MooTransport, didReceiveData data: Data)
-    func transport(_ transport: MooTransport, didReceiveString string: String)
+    func transportDidOpen(_ transport: _MooTransport)
+    func transportDidClose(_ transport: _MooTransport)
+    func transport(_ transport: _MooTransport, didReceiveError error: Error)
+    func transport(_ transport: _MooTransport, didReceiveData data: Data)
+    func transport(_ transport: _MooTransport, didReceiveString string: String)
 }
 
 class MooTransport: NSObject, _MooTransport {

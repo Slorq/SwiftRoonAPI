@@ -8,6 +8,13 @@
 @testable import SwiftRoonAPI
 import XCTest
 
+struct MooTransportMockFactory: _MooTransportFactory {
+
+    func make(host: String, port: UInt16) throws -> _MooTransport {
+        _MooTransportMock()
+    }
+}
+
 final class SwiftRoonAPITests: XCTestCase {
 
     private var sood: _SoodMock!
@@ -22,8 +29,18 @@ final class SwiftRoonAPITests: XCTestCase {
     override func setUp() {
         sood = _SoodMock()
         sood.underlyingIsStarted = false
-        roonAPI = RoonAPI(details: details, sood: sood)
+        roonAPI = RoonAPI(details: details, sood: sood, mooTransportFactory: MooTransportMockFactory())
         super.setUp()
+    }
+
+    func testInitWithDefaultProperties() {
+        // Given
+        // When
+        let roonAPI = RoonAPI(details: details)
+
+        // Then
+        XCTAssertTrue(roonAPI.testHooks.sood is Sood)
+        XCTAssertTrue(roonAPI.testHooks.mooTransportFactory is MooTransportFactory)
     }
 
     func testSoodQueryWhenStartDiscoveryIsCalled() {
@@ -127,6 +144,43 @@ final class SwiftRoonAPITests: XCTestCase {
         XCTAssertTrue(soodConnection === roonAPI.testHooks.soodConnections.first?.value)
     }
 
+    func testRegisterExtensionWithServices() throws {
+        // Given
+        roonAPI.corePaired = { _ in }
+        try roonAPI.registerServices(optionalServices: [RoonService(name: "OptionalService1")],
+                                     requiredServices: [RoonService(name: "RequiredService1")],
+                                     providedServices: [RoonService(name: "ProvidedService1")])
+        createSoodConnection()
+        let moo = try XCTUnwrap(roonAPI.testHooks.soodConnections.first?.value)
+        let transport = try XCTUnwrap(moo.testHooks.transport as? _MooTransportMock)
+
+        // When
+        moo.onOpen?(moo)
+
+        // Then
+        XCTAssertEqual(transport.sendDataCallsCount, 1)
+        XCTAssertEqual(transport.sendDataReceivedData,
+                       "MOO/1 REQUEST com.roonlabs.registry:1/info\nRequest-Id: 0\n\n".data(using: .utf8))
+        let infoResponse = try XCTUnwrap("MOO/1 COMPLETE Success\nContent-Type: application/json\nRequest-Id: 0\nContent-Length: 138\n\n{\"core_id\":\"fc519bd4-30c9-4e38-b8ea-53f5816ba75e\",\"display_name\":\"Alejandros-MacBook-Pro\",\"display_version\":\"2.0 (build 1303) production\"}".data(using: .utf8))
+        moo.transport(transport, didReceiveData: infoResponse)
+        XCTAssertEqual(transport.sendDataCallsCount, 2)
+        let sentData = try XCTUnwrap(transport.sendDataReceivedData)
+        let sentString = try XCTUnwrap(String(data: sentData, encoding: .utf8))
+        XCTAssertTrue(sentString.contains("MOO/1 REQUEST com.roonlabs.registry:1/register\n"))
+        XCTAssertTrue(sentString.contains("Request-Id: 1"))
+        XCTAssertTrue(sentString.contains("Content-Length: 320"))
+        XCTAssertTrue(sentString.contains("Content-Type: application/json"))
+        XCTAssertTrue(sentString.contains("\"provided_services\":[\"ProvidedService1\",\"com.roonlabs.ping:1\"]"))
+        XCTAssertTrue(sentString.contains("\"required_services\":[\"RequiredService1\"]"))
+        XCTAssertTrue(sentString.contains("\"website\":\"www.website.com\""))
+        XCTAssertTrue(sentString.contains("\"optional_services\":[\"OptionalService1\"]"))
+        XCTAssertTrue(sentString.contains("\"email\":\"email@test.com\""))
+        XCTAssertTrue(sentString.contains("\"publisher\":\"PublisherName\""))
+        XCTAssertTrue(sentString.contains("\"display_name\":\"DisplayName\""))
+        XCTAssertTrue(sentString.contains("\"extension_id\":\"ExtensionID\""))
+        XCTAssertTrue(sentString.contains("\"display_version\":\"DisplayVersion\""))
+    }
+
     func testInitRequiredServicesWithoutCorePairedOrFoundThrowsError() {
         // Given
         roonAPI.corePaired = nil
@@ -164,6 +218,38 @@ final class SwiftRoonAPITests: XCTestCase {
 
         // Then
         XCTAssertNotNil(roonAPI.testHooks.pairingService)
+    }
+
+    func testPingSucceeds() throws {
+        // Given
+        try roonAPI.registerServices()
+        createSoodConnection()
+        let soodConnection = try XCTUnwrap(roonAPI.testHooks.soodConnections.first)
+        let mooTransport = try MooTransport(host: "192.168.1.26", port: 55000)
+        let pingMessage = "MOO/1 REQUEST com.roonlabs.ping:1/ping\nLogging: quiet\nRequest-Id: 1\n\n"
+        let data = try XCTUnwrap(pingMessage.data(using: .utf8))
+
+        // When
+        soodConnection.value.transport(mooTransport, didReceiveData: data)
+
+        // Then
+        let sentData = try XCTUnwrap((soodConnection.value.testHooks.transport as? _MooTransportMock)?.sendDataReceivedData)
+        let sentMessage = try XCTUnwrap(String(data: sentData, encoding: .utf8))
+        XCTAssertEqual(sentMessage, "MOO/1 COMPLETE Success\nRequest-Id: 1\n\n")
+    }
+
+    private func createSoodConnection() {
+        sood.onMessage?(SoodMessage(props: SoodMessage.Props(serviceId: "00720724-5143-4a9b-abac-0e50cba674bb",
+                                                             uniqueId: "fc519bd4-30c9-4e38-b8ea-53f5816ba75e",
+                                                             httpPort: "9300",
+                                                             tid: "a24649ef-e7cd-430a-a2bc-db4ed6a3f8c8",
+                                                             tcpPort: "9150",
+                                                             httpsPort: "55000",
+                                                             displayVersion: "1.0 (build 1303) production",
+                                                             name: "MacBook-Pro"),
+                                    from: SoodMessage.From(ip: "172.20.10.7",
+                                                           port: 50942),
+                                    type: "R"))
     }
 
 }
