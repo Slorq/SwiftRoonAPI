@@ -240,7 +240,27 @@ final class SwiftRoonAPITests: XCTestCase {
         XCTAssertEqual(sentMessage, "MOO/1 COMPLETE Success\nRequest-Id: 1\n\n")
     }
 
-    func testUnrecognizedSubserviceSendsComplete() throws {
+    func testUnrecognizedServiceSendsInvalidRequest() throws {
+        // Given
+        try roonAPI.registerServices(providedServices: [
+            RoonService(name: "ProvidedService1")
+        ])
+        createSoodConnection()
+        let moo = try XCTUnwrap(roonAPI.testHooks.soodConnections.first?.value)
+        let unrecognizedService = "com.roonlabs.pong:1"
+        let message = "MOO/1 REQUEST \(unrecognizedService)/ping\nRequest-Id: 1\n\n"
+        let data = try XCTUnwrap(message.data(using: .utf8))
+
+        // When
+        moo.transport(moo.testHooks.transport, didReceiveData: data)
+
+        // Then
+        let sentData = try XCTUnwrap((moo.testHooks.transport as? _MooTransportMock)?.sendDataReceivedData)
+        let sentMessage = try XCTUnwrap(String(data: sentData, encoding: .utf8))
+        XCTAssertEqual(sentMessage, "MOO/1 COMPLETE InvalidRequest\nRequest-Id: 1\n\n")
+    }
+
+    func testUnrecognizedSubserviceSendsInvalidRequest() throws {
         // Given
         try roonAPI.registerServices(providedServices: [
             RoonService(name: "ProvidedService1")
