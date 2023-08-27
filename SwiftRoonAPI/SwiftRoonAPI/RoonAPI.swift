@@ -392,16 +392,6 @@ public final class RoonAPI {
     }
 }
 
-extension URL {
-    static var configPath: URL? = {
-        guard let documentDirectory = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask).first else {
-            return nil
-        }
-
-        return documentDirectory.appendingPathComponent("config.json")
-    }()
-}
-
 enum RoonAPIError: Error, Equatable {
     case unableToInitServices(details: String)
 }
