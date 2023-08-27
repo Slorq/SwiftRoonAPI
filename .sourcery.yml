@@ -1,0 +1,34 @@
+configurations:
+
+    # SwiftRoonAPICore
+    - sources:
+        - ./SwiftRoonAPICore/SwiftRoonAPICore
+      templates:
+        - ./Sourcery/Templates/AutoMockable.stencil
+      output:
+        ./SwiftRoonAPICore/Tests/Mocks/Generated
+      args:
+        autoMockableTestableImports: 
+          - "SwiftRoonAPICore"
+
+    # SwiftRoonAPI
+    - sources:
+        - ./SwiftRoonAPI/SwiftRoonAPI
+      templates:
+        - ./Sourcery/Templates/AutoMockable.stencil
+      output:
+        ./SwiftRoonAPI/Tests/Mocks/Generated
+      args:
+        autoMockableTestableImports: 
+          - "SwiftRoonAPI"
+
+    # TransportAPI
+    - sources:
+        - ./TransportAPI/TransportAPI
+      templates:
+        - ./Sourcery/Templates/AutoMockable.stencil
+      output:
+        ./TransportAPI/Tests/Mocks/Generated
+      args:
+        autoMockableTestableImports: 
+          - "RoonTransportAPI"

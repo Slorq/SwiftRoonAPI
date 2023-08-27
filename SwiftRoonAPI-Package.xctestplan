@@ -1,0 +1,38 @@
+{
+  "configurations" : [
+    {
+      "id" : "8F133C61-A93D-4688-9837-334DE6C49514",
+      "name" : "Test Scheme Action",
+      "options" : {
+
+      }
+    }
+  ],
+  "defaultOptions" : {
+
+  },
+  "testTargets" : [
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "RoonTransportAPITests",
+        "name" : "RoonTransportAPITests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "SwiftRoonAPICoreTests",
+        "name" : "SwiftRoonAPICoreTests"
+      }
+    },
+    {
+      "target" : {
+        "containerPath" : "container:",
+        "identifier" : "SwiftRoonAPITests",
+        "name" : "SwiftRoonAPITests"
+      }
+    }
+  ],
+  "version" : 1
+}

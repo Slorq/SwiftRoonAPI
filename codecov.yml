@@ -1,0 +1,14 @@
+component_management:
+  individual_components:
+    - component_id: core  # this is an identifier that should not be changed
+      name: Core  # this is a display name, and can be changed freely
+      paths:
+        - SwiftRoonAPICore
+    - component_id: swift-roon-api  # this is an identifier that should not be changed
+      name: SwiftRoonAPI  # this is a display name, and can be changed freely
+      paths:
+        - SwiftRoonAPI
+    - component_id: transport-api  # this is an identifier that should not be changed
+      name: TransportAPI  # this is a display name, and can be changed freely
+      paths:
+        - TransportAPI
