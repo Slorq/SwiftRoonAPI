@@ -127,22 +127,22 @@ internal class Moo: NSObject, _Moo {
 
 extension Moo: MooTransportDelegate {
 
-    func transportDidOpen(_ transport: MooTransport) {
+    func transportDidOpen(_ transport: _MooTransport) {
         logger.log("Moo - didOpen")
         onOpen?(self)
     }
 
-    func transportDidClose(_ transport: MooTransport) {
+    func transportDidClose(_ transport: _MooTransport) {
         logger.log("Moo - didClose")
         onClose?(self)
     }
 
-    func transport(_ transport: MooTransport, didReceiveError error: Error) {
+    func transport(_ transport: _MooTransport, didReceiveError error: Error) {
         logger.log("Moo - error - \(error)")
         onError?(self, error)
     }
 
-    func transport(_ transport: MooTransport, didReceiveData data: Data) {
+    func transport(_ transport: _MooTransport, didReceiveData data: Data) {
         do {
             let message = try mooDecoder.decode(data)
             onMessage?(self, message)
@@ -151,7 +151,7 @@ extension Moo: MooTransportDelegate {
         }
     }
 
-    func transport(_ transport: MooTransport, didReceiveString string: String) {
+    func transport(_ transport: _MooTransport, didReceiveString string: String) {
         do {
             let message = try mooDecoder.decode(string)
             onMessage?(self, message)
@@ -163,6 +163,7 @@ extension Moo: MooTransportDelegate {
 }
 
 protocol _MooTransport: AutoMockable {
+
     var delegate: MooTransportDelegate? { get set }
 
     func close()
@@ -173,7 +174,7 @@ protocol _MooTransport: AutoMockable {
 #if DEBUG
 extension Moo {
 
-    var hooks: TestHooks {
+    var testHooks: TestHooks {
         TestHooks(self)
     }
 
@@ -187,6 +188,7 @@ extension Moo {
 
         var requestHandlers: [Int: (MooMessage?) -> Void] { moo.requestHandlers }
         var requestID: Int { moo.requestID }
+        var transport: _MooTransport { moo.transport }
     }
 }
 #endif

@@ -35,7 +35,7 @@ import AppKit
 
 
 
-public class MooMock: _Moo {
+public class _MooMock: _Moo {
 
     public init() {}
 
